@@ -1,0 +1,39 @@
+{
+  "project_info": {
+    "project_number": "332639109110",
+    "project_id": "cmsc4303-ryanl-firephotomemoap",
+    "storage_bucket": "cmsc4303-ryanl-firephotomemoap.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:332639109110:android:8b686b57997b8f3f16d1d7",
+        "android_client_info": {
+          "package_name": "edu.uco.rlorenz.map.Assignment3"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "332639109110-jibha68lqpbifbephkuavf7ah784od3j.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBC8JLJmGx2CuHUu0exootxfwkBuRBVl_Y"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "332639109110-jibha68lqpbifbephkuavf7ah784od3j.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
