@@ -113,7 +113,7 @@ class _AddPhotoMemoState extends State<AddPhotoMemoScreen> {
                   hintText: 'Title',
                 ),
                 autocorrect: true,
-                validator: null,
+                validator: PhotoMemo.validateTitle,
                 onSaved: con.saveTitle,
               ),
               TextFormField(

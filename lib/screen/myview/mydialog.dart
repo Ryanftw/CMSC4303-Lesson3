@@ -18,7 +18,11 @@ class MyDialog {
     Navigator.pop(context);
   }
 
-  static void info({BuildContext context, String title, String content}) {
+  static void info({
+    @required BuildContext context,
+    @required String title,
+    @required String content,
+  }) {
     showDialog(
       context: context,
       barrierDismissible: false,

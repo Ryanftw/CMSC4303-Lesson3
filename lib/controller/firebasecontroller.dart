@@ -9,7 +9,7 @@ import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
 
 class FirebaseController {
-  static Future<User> signIn({String email, String password}) async {
+  static Future<User> signIn({@required String email, @required String password}) async {
     UserCredential userCredential =
         await FirebaseAuth.instance.signInWithEmailAndPassword(
       email: email,
@@ -23,7 +23,7 @@ class FirebaseController {
   }
 
   static Future<Map<String, String>> uploadPhotoFile({
-    File photo,
+    @required File photo,
     String filename,
     @required String uid,
     @required Function listener,
