@@ -5,7 +5,9 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 
 import 'model/constant.dart';
+import 'screen/sharedwith_screen.dart';
 import 'screen/signin_screen.dart';
+import 'screen/signup_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -18,12 +20,18 @@ class PhotoMemoApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
         debugShowCheckedModeBanner: Constant.DEV,
+        theme: ThemeData(
+          brightness: Brightness.dark,
+          primaryColor: Colors.blue,
+        ),
         initialRoute: SignInScreen.routeName,
         routes: {
           SignInScreen.routeName: (context) => SignInScreen(),
           UserHomeScreen.routeName: (context) => UserHomeScreen(),
           AddPhotoMemoScreen.routeName: (context) => AddPhotoMemoScreen(),
           DetailedViewScreen.routeName: (context) => DetailedViewScreen(),
+          SignUpScreen.routeName: (context) => SignUpScreen(),
+          SharedWithScreen.routeName: (context) => SharedWithScreen(),
         });
   }
 }

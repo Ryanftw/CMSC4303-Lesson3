@@ -36,6 +36,38 @@ class PhotoMemo {
     this.imageLabels ??= [];
   }
 
+  PhotoMemo.clone(PhotoMemo p) {
+    this.docID = p.docID;
+    this.createdBy = p.createdBy;
+    this.memo = p.memo;
+    this.photoFilename = p.photoFilename;
+    this.photoURL = p.photoURL;
+    this.title = p.title;
+    this.timestamp = p.timestamp;
+    this.sharedWith = [];
+    this.sharedWith.addAll(p.sharedWith); // deep copy list
+    this.imageLabels = [];
+    this.imageLabels.addAll(p.imageLabels); // deep copy list
+  }
+// a = b ===> a.assign(b)
+  void assign(PhotoMemo p) {
+    this.docID = p.docID;
+    this.createdBy = p.createdBy;
+    this.memo = p.memo;
+    this.photoFilename = p.photoFilename;
+    this.photoURL = p.photoURL;
+    this.title = p.title;
+    this.timestamp = p.timestamp;
+    this
+        .sharedWith
+        .clear(); // Clear first in case list has changed, then re-assign list values
+    this.sharedWith.addAll(p.sharedWith); // deep copy list
+    this
+        .imageLabels
+        .clear(); // Clear first in case list has changed, then re-assign list values
+    this.imageLabels.addAll(p.imageLabels); // deep copy list
+  }
+
 // from Dart object to Firestore document. Converts dart object to compatible type with firestore
   Map<String, dynamic> serialize() {
     return <String, dynamic>{

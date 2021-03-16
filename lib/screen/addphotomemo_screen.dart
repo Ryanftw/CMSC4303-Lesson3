@@ -173,7 +173,7 @@ class _Controller {
 
       // image labels by Machine learning
       state.render(() => state.progressMessage = 'ML Image Labeler Started!');
-      List<String> imageLabels =
+      List<dynamic> imageLabels =
           await FirebaseController.getImageLabels(photoFile: state.photo);
       state.render(() => state.progressMessage = null);
 
