@@ -3,6 +3,7 @@ import 'package:Assignment3/model/photomemo.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
+import 'addcomment_screen.dart';
 import 'myview/myimage.dart';
 
 class SharedWithScreen extends StatefulWidget {
@@ -56,9 +57,23 @@ class _SharedWithState extends State<SharedWithScreen> {
                         ),
                       ),
                     ),
-                    Text(
-                      "Title: ${photoMemoList[index].title}",
-                      style: Theme.of(context).textTheme.headline6,
+                    Row(
+                      children: [
+                        Expanded(
+                          flex: 3,
+                          child: Text(
+                            "Title: ${photoMemoList[index].title}",
+                            style: Theme.of(context).textTheme.headline6,
+                          ),
+                        ),
+                        Expanded(
+                          flex: 1,
+                          child: RaisedButton(
+                            onPressed: () => con.addComment(index),
+                            child: Text("Add Comment"),
+                          ),
+                        ),
+                      ],
                     ),
                     Text(
                       "Memo: ${photoMemoList[index].memo}",
@@ -83,4 +98,12 @@ class _SharedWithState extends State<SharedWithScreen> {
 class _Controller {
   _SharedWithState state;
   _Controller(this.state);
+
+  void addComment(int index) {
+    Navigator.pushNamed(state.context, AddCommentScreen.routeName, arguments: {
+      Constant.ARG_USER: state.user,
+      Constant.ARG_ONE_PHOTOMEMO: state.photoMemoList[index],
+    });
+    // Navigator.pop(state.context);
+  }
 }

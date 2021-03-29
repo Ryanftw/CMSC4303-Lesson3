@@ -183,7 +183,13 @@ class _Controller {
       tempMemo.createdBy = state.user.email;
       tempMemo.imageLabels = imageLabels;
       String docId = await FirebaseController.addPhotoMemo(tempMemo);
-      tempMemo.docID = docId;
+      tempMemo.docID =
+          docId; //?!??! comments uploaded separately 
+          //and have the docID attached to them?
+          //Build comments with a doc id. 
+          //when view comments, check the comments in firebase, and add
+          //all the comments that include that doc id. try to arrange for the 
+          //best performance somehow if you can. //may work fine without though.
       state.photoMemoList.insert(0, tempMemo);
       MyDialog.circularProgressStop(state.context);
       Navigator.pop(state.context); // return to user home screen.

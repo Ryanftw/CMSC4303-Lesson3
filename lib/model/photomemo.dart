@@ -6,6 +6,7 @@ class PhotoMemo {
   String photoFilename; // stored at Storage in firebase (non text database)
   String photoURL;
   DateTime timestamp;
+
   List<dynamic>
       sharedWith; // List of emails // dynamic because String is not compatible with Firestore, but dynamic is anything
   List<dynamic>
@@ -20,6 +21,7 @@ class PhotoMemo {
   static const TIMESTAMP = 'timestamp';
   static const SHARED_WITH = 'sharedWith';
   static const IMAGE_LABELS = 'imageLabels';
+  static const IMAGE_COMMENTS = 'comments';
 
   PhotoMemo({
     this.docID,

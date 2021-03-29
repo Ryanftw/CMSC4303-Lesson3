@@ -1,4 +1,5 @@
 import 'package:Assignment3/controller/firebasecontroller.dart';
+import 'package:Assignment3/model/comment.dart';
 import 'package:Assignment3/model/constant.dart';
 import 'package:Assignment3/model/photomemo.dart';
 import 'package:Assignment3/screen/addphotomemo_screen.dart';
@@ -22,6 +23,7 @@ class _UserHomeState extends State<UserHomeScreen> {
   _Controller con;
   User user;
   List<PhotoMemo> photoMemoList;
+  List<Comment> commentList;
   GlobalKey<FormState> formKey = GlobalKey<FormState>();
 
   @override
@@ -36,7 +38,9 @@ class _UserHomeState extends State<UserHomeScreen> {
   Widget build(BuildContext context) {
     Map args = ModalRoute.of(context).settings.arguments;
     user ??= args[Constant.ARG_USER];
+    commentList ??= args[Constant.ARG_COMMENT];
     photoMemoList ??= args[Constant.ARG_PHOTOMEMOLIST];
+
     return WillPopScope(
       onWillPop: () => Future.value(false), // Android back button disabled
       child: Scaffold(
@@ -183,6 +187,7 @@ class _Controller {
     state.render(() {});
   }
 
+  List<PhotoMemo> photoMemoList;
   void sharedWithMe() async {
     try {
       List<PhotoMemo> photoMemoList = await FirebaseController.getPhotoMemoSharedWithMe(
@@ -197,6 +202,24 @@ class _Controller {
       MyDialog.info(
         context: state.context,
         title: 'get Shared PhotoMemo error',
+        content: '$e',
+      );
+    }
+
+    try {
+      List<Comment> commentList =
+          await FirebaseController.getCommentList(email: user.email);
+      MyDialog.circularProgressStop(state.context);
+      Navigator.pushNamed(state.context, UserHomeScreen.routeName, arguments: {
+        Constant.ARG_USER: user,
+        Constant.ARG_PHOTOMEMOLIST: photoMemoList,
+        Constant.COMMENT_COLLECTION: commentList,
+      });
+    } catch (e) {
+      MyDialog.circularProgressStop(state.context);
+      MyDialog.info(
+        context: state.context,
+        title: 'Firestore getCommentList error',
         content: '$e',
       );
     }

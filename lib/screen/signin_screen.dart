@@ -1,4 +1,5 @@
 import 'package:Assignment3/controller/firebasecontroller.dart';
+import 'package:Assignment3/model/comment.dart';
 import 'package:Assignment3/model/constant.dart';
 import 'package:Assignment3/model/photomemo.dart';
 import 'package:Assignment3/screen/myview/mydialog.dart';
@@ -142,20 +143,37 @@ class _Controller {
       );
       return;
     }
-
+    List<PhotoMemo> photoMemoList;
     try {
-      List<PhotoMemo> photoMemoList =
-          await FirebaseController.getPhotoMemoList(email: user.email);
-      MyDialog.circularProgressStop(state.context);
-      Navigator.pushNamed(state.context, UserHomeScreen.routeName, arguments: {
-        Constant.ARG_USER: user,
-        Constant.ARG_PHOTOMEMOLIST: photoMemoList,
-      });
+      photoMemoList = await FirebaseController.getPhotoMemoList(email: user.email);
+      // MyDialog.circularProgressStop(state.context);
+      // Navigator.pushNamed(state.context, UserHomeScreen.routeName, arguments: {
+      // Constant.ARG_USER: user,
+      // Constant.ARG_PHOTOMEMOLIST: photoMemoList,
+      // });
     } catch (e) {
       MyDialog.circularProgressStop(state.context);
       MyDialog.info(
         context: state.context,
         title: 'Firestore getPhotoMemoList error',
+        content: '$e',
+      );
+    }
+
+    try {
+      List<Comment> commentList =
+          await FirebaseController.getCommentList(email: user.email);
+      MyDialog.circularProgressStop(state.context);
+      Navigator.pushNamed(state.context, UserHomeScreen.routeName, arguments: {
+        Constant.ARG_USER: user,
+        Constant.ARG_PHOTOMEMOLIST: photoMemoList,
+        Constant.COMMENT_COLLECTION: commentList,
+      });
+    } catch (e) {
+      MyDialog.circularProgressStop(state.context);
+      MyDialog.info(
+        context: state.context,
+        title: 'Firestore getCommentList error',
         content: '$e',
       );
     }

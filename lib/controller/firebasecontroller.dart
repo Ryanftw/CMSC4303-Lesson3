@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:Assignment3/model/comment.dart';
 import 'package:Assignment3/model/constant.dart';
 import 'package:Assignment3/model/photomemo.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -55,6 +56,13 @@ class FirebaseController {
     var ref = await FirebaseFirestore.instance
         .collection(Constant.PHOTOMEMO_COLLECTION)
         .add(photoMemo.serialize());
+    return ref.id;
+  }
+
+  static Future<String> addComment(Comment comment) async {
+    var ref = await FirebaseFirestore.instance
+        .collection(Constant.COMMENT_COLLECTION)
+        .add(comment.serialize());
     return ref.id;
   }
 
