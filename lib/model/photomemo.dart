@@ -5,6 +5,8 @@ class PhotoMemo {
   String title;
   String photoFilename; // stored at Storage in firebase (non text database)
   String photoURL;
+  bool notification;
+  DateTime lastViewed;
   DateTime timestamp;
 
   List<dynamic>
@@ -19,9 +21,11 @@ class PhotoMemo {
   static const PHOTO_URL = 'photoURL';
   static const PHOTO_FILENAME = 'photoFilename';
   static const TIMESTAMP = 'timestamp';
+  static const LAST_VIEWED = 'lastViewed';
   static const SHARED_WITH = 'sharedWith';
   static const IMAGE_LABELS = 'imageLabels';
   static const IMAGE_COMMENTS = 'comments';
+  static const NOTIFICATION = 'notification';
 
   PhotoMemo({
     this.docID,
@@ -33,6 +37,8 @@ class PhotoMemo {
     this.title,
     this.sharedWith,
     this.imageLabels,
+    this.lastViewed,
+    this.notification,
   }) {
     this.sharedWith ??= []; // if the list is null, start with an empty list.
     this.imageLabels ??= [];
@@ -46,6 +52,8 @@ class PhotoMemo {
     this.photoURL = p.photoURL;
     this.title = p.title;
     this.timestamp = p.timestamp;
+    this.lastViewed = p.lastViewed;
+    this.notification;
     this.sharedWith = [];
     this.sharedWith.addAll(p.sharedWith); // deep copy list
     this.imageLabels = [];
@@ -60,6 +68,8 @@ class PhotoMemo {
     this.photoURL = p.photoURL;
     this.title = p.title;
     this.timestamp = p.timestamp;
+    this.lastViewed = p.lastViewed;
+    this.notification;
     this
         .sharedWith
         .clear(); // Clear first in case list has changed, then re-assign list values
@@ -81,6 +91,8 @@ class PhotoMemo {
       TIMESTAMP: this.timestamp,
       SHARED_WITH: this.sharedWith,
       IMAGE_LABELS: this.imageLabels,
+      LAST_VIEWED: this.lastViewed,
+      NOTIFICATION: this.notification,
     };
   }
 
@@ -94,9 +106,13 @@ class PhotoMemo {
       photoURL: doc[PHOTO_URL],
       sharedWith: doc[SHARED_WITH],
       imageLabels: doc[IMAGE_LABELS],
+      notification: doc[NOTIFICATION],
       timestamp: doc[TIMESTAMP] == null
           ? null
           : DateTime.fromMillisecondsSinceEpoch(doc[TIMESTAMP].millisecondsSinceEpoch),
+      lastViewed: doc[LAST_VIEWED] == null
+          ? DateTime.fromMillisecondsSinceEpoch(0)
+          : DateTime.fromMillisecondsSinceEpoch(doc[LAST_VIEWED].millisecondsSinceEpoch),
     );
   }
 

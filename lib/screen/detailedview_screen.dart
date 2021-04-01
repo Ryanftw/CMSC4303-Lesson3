@@ -2,12 +2,14 @@
 import 'dart:io';
 
 import 'package:Assignment3/controller/firebasecontroller.dart';
+import 'package:Assignment3/model/comment.dart';
 import 'package:Assignment3/model/constant.dart';
 import 'package:Assignment3/model/photomemo.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/Material.dart';
 import 'package:flutter/foundation.dart';
 import 'package:image_picker/image_picker.dart';
+import 'viewcomments_screen.dart';
 
 import 'myview/mydialog.dart';
 import 'myview/myimage.dart';
@@ -35,7 +37,7 @@ class _DetailedViewState extends State<DetailedViewScreen> {
     con = _Controller(this);
   }
 
-  @override
+  // @override
   void render(fn) => setState(fn);
 
   @override
@@ -116,16 +118,30 @@ class _DetailedViewState extends State<DetailedViewScreen> {
                       progressMessage,
                       style: Theme.of(context).textTheme.headline6,
                     ),
-              TextFormField(
-                enabled: editMode,
-                style: Theme.of(context).textTheme.headline6,
-                decoration: InputDecoration(
-                  hintText: "Enter title",
-                ),
-                initialValue: onePhotoMemoTemp.title,
-                autocorrect: true,
-                validator: PhotoMemo.validateTitle,
-                onSaved: con.saveTitle,
+              Row(
+                children: [
+                  Expanded(
+                    flex: 5,
+                    child: TextFormField(
+                      enabled: editMode,
+                      style: Theme.of(context).textTheme.headline6,
+                      decoration: InputDecoration(
+                        hintText: "Enter title",
+                      ),
+                      initialValue: onePhotoMemoTemp.title,
+                      autocorrect: true,
+                      validator: PhotoMemo.validateTitle,
+                      onSaved: con.saveTitle,
+                    ),
+                  ),
+                  Expanded(
+                    flex: 2,
+                    child: RaisedButton(
+                      onPressed: con.viewComments,
+                      child: Text("View Comments"),
+                    ),
+                  ),
+                ],
               ),
               TextFormField(
                 enabled: editMode,
@@ -191,6 +207,7 @@ class _Controller {
     // state.render(() => state.editMode = false);
 
     try {
+      bool commentsDeleted = false;
       MyDialog.circularProgressStart(state.context);
       Map<String, dynamic> updateInfo =
           {}; // store CHANGES - like title and memo - from each docID that has changes.
@@ -210,6 +227,10 @@ class _Controller {
                 }
               });
             });
+        commentsDeleted = true;
+        print('${state.onePhotoMemoOriginal.photoURL}');
+        await FirebaseController.deletePhotoMemoComments(
+            docId: state.onePhotoMemoOriginal.photoURL);
 
         state.onePhotoMemoTemp.photoURL = photoInfo[Constant.ARG_DOWNLOADURL];
         state.render(() => state.progressMessage = 'ML image labeler started');
@@ -227,8 +248,18 @@ class _Controller {
       if (state.onePhotoMemoOriginal.memo != state.onePhotoMemoTemp.memo)
         updateInfo[PhotoMemo.MEMO] = state.onePhotoMemoTemp.memo;
       if (!listEquals(
-          state.onePhotoMemoOriginal.sharedWith, state.onePhotoMemoTemp.sharedWith))
+          state.onePhotoMemoOriginal.sharedWith, state.onePhotoMemoTemp.sharedWith)) {
         updateInfo[PhotoMemo.SHARED_WITH] = state.onePhotoMemoTemp.sharedWith;
+        if (!commentsDeleted) {
+          List<Comment> comments = await FirebaseController.getCommentList(
+              docId: state.onePhotoMemoOriginal.photoURL);
+          for (Comment comment in comments) {
+            if (!state.onePhotoMemoTemp.sharedWith.contains(comment.commentBy)) {
+              await FirebaseController.deletePhotoComment(docId: comment.commentBy);
+            }
+          }
+        }
+      }
 
       updateInfo[PhotoMemo.TIMESTAMP] = DateTime.now();
       await FirebaseController.updatePhotoMemo(state.onePhotoMemoTemp.docID, updateInfo);
@@ -240,6 +271,30 @@ class _Controller {
       MyDialog.circularProgressStop(state.context);
       MyDialog.info(
           context: state.context, title: 'Update photoMemo error', content: '$e');
+    }
+  }
+
+  void viewComments() async {
+    try {
+      state.onePhotoMemoOriginal.notification = false;
+      Map<String, dynamic> updateLastViewed = {};
+      state.onePhotoMemoOriginal.lastViewed = DateTime.now();
+      updateLastViewed[PhotoMemo.LAST_VIEWED] = state.onePhotoMemoOriginal.lastViewed;
+      await FirebaseController.updateLastViewed(
+          state.onePhotoMemoOriginal.docID, updateLastViewed);
+      List<Comment> comments = await FirebaseController.getCommentList(
+          docId: state.onePhotoMemoOriginal.photoURL);
+      Navigator.pushNamed(state.context, ViewCommentsScreen.routeName, arguments: {
+        Constant.ARG_USER: state.user,
+        Constant.ARG_ONE_PHOTOMEMO: state.onePhotoMemoOriginal,
+        Constant.ARG_COMMENTS: comments,
+      });
+    } catch (e) {
+      MyDialog.info(
+        context: state.context,
+        title: "Firebase Comments Error",
+        content: "$e",
+      );
     }
   }
 

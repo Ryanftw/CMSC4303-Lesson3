@@ -18,7 +18,7 @@ class AddCommentScreen extends StatefulWidget {
 
 class _AddCommentState extends State<AddCommentScreen> {
   _Controller con;
-  Comment userComment;
+  // List<Comment> comments;
   User user;
   PhotoMemo onePhotoMemo;
   PhotoMemo onePhotoMemoTemp;
@@ -36,12 +36,16 @@ class _AddCommentState extends State<AddCommentScreen> {
   @override
   Widget build(BuildContext context) {
     Map args = ModalRoute.of(context).settings.arguments;
+    // comments ??= args[Constant.ARG_COMMENTS];
     user ??= args[Constant.ARG_USER];
     onePhotoMemo ??= args[Constant.ARG_ONE_PHOTOMEMO];
     onePhotoMemoTemp ??= PhotoMemo.clone(onePhotoMemo);
     return Scaffold(
       appBar: AppBar(
         title: Text("Add Comment Screen"),
+        actions: [
+          IconButton(icon: Icon(Icons.check), onPressed: con.save),
+        ],
       ),
       body: Form(
         key: formKey,
@@ -95,7 +99,7 @@ class _AddCommentState extends State<AddCommentScreen> {
 class _Controller {
   _AddCommentState state;
   _Controller(this.state);
-  Comment tempComment; // build a new comment and add it somehow
+  Comment tempComment = Comment(); // build a new comment and add it somehow
 
   String validateComment(String value) {
     if (value.length > 2) {
@@ -105,25 +109,36 @@ class _Controller {
     }
   }
 
-  void saveComment(String value) async {
+  void saveComment(String value) {
+    tempComment.comment = value;
+  }
+
+  void save() async {
     if (!state.formKey.currentState.validate()) return;
     state.formKey.currentState.save();
 
     MyDialog.circularProgressStart(state.context);
 
-    tempComment.comment = value;
-    tempComment.commentBy = state.user.uid;
-    tempComment.commentDocId = state.onePhotoMemo.docID;
+    tempComment.commentBy = state.user.email;
+    tempComment.commentDocId = state.onePhotoMemo.photoURL;
     tempComment.timestamp = DateTime.now();
+
+    MyDialog.circularProgressStart(state.context);
 
     try {
       String commentId = await FirebaseController.addComment(tempComment);
       tempComment.photoCommentId = commentId;
-      //send the cumulative list of comments in from the previous page
-      //all users need the list of cumulative comments which starts as
-      //an empty list of comments before the first user makes a comment
-      //on a photomemo
-    } catch (e) {}
+      // state.comments.insert(0, tempComment);
+      MyDialog.circularProgressStop(state.context);
+      Navigator.pop(state.context); // return to user shared with screen
+      Navigator.pop(state.context); // return to user shared with screen
+    } catch (e) {
+      MyDialog.info(
+        context: state.context,
+        title: "Add Comment Error",
+        content: '$e',
+      );
+    }
 
     //Make a new comment by this user
     //Save the DocId of the onePhotoMemoTemp into the CommentDocId

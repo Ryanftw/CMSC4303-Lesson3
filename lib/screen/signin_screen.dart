@@ -98,13 +98,14 @@ class _Controller {
   _SignInState state;
   _Controller(this.state);
   String email;
+  String userName;
   String password;
 
   String validateEmail(String value) {
     if (value.contains('@') && value.contains('.'))
       return null;
     else
-      return 'Invalid email address.';
+      return 'Invalid Login';
   }
 
   String validatePassword(String value) {
@@ -124,8 +125,16 @@ class _Controller {
 
   void signIn() async {
     if (!state.formKey.currentState.validate()) return;
-
-    state.formKey.currentState.save();
+    try {
+      state.formKey.currentState.save();
+    } catch (e) {
+      MyDialog.info(
+        context: state.context,
+        title: "Sign-in Error",
+        content: e.toString(),
+      );
+      return;
+    }
 
     User user;
 
@@ -144,36 +153,38 @@ class _Controller {
       return;
     }
     List<PhotoMemo> photoMemoList;
+    List<List<Comment>> commentsList = new List<List<Comment>>();
     try {
       photoMemoList = await FirebaseController.getPhotoMemoList(email: user.email);
-      // MyDialog.circularProgressStop(state.context);
-      // Navigator.pushNamed(state.context, UserHomeScreen.routeName, arguments: {
-      // Constant.ARG_USER: user,
-      // Constant.ARG_PHOTOMEMOLIST: photoMemoList,
-      // });
-    } catch (e) {
-      MyDialog.circularProgressStop(state.context);
-      MyDialog.info(
-        context: state.context,
-        title: 'Firestore getPhotoMemoList error',
-        content: '$e',
-      );
-    }
 
-    try {
-      List<Comment> commentList =
-          await FirebaseController.getCommentList(email: user.email);
+      for (var memo in photoMemoList) {
+        List<Comment> comments =
+            await FirebaseController.getCommentList(docId: memo.photoURL);
+        if (comments.length > 0) commentsList.add(comments);
+      }
+      if (commentsList != null) {
+        for (var cList in commentsList) {
+          for (var comment in cList) {
+            for (var photo in photoMemoList) {
+              if (comment.commentDocId == photo.photoURL &&
+                  comment.timestamp.isAfter(photo.lastViewed)) {
+                photo.notification = true;
+              }
+            }
+          }
+        }
+      }
+
       MyDialog.circularProgressStop(state.context);
       Navigator.pushNamed(state.context, UserHomeScreen.routeName, arguments: {
         Constant.ARG_USER: user,
         Constant.ARG_PHOTOMEMOLIST: photoMemoList,
-        Constant.COMMENT_COLLECTION: commentList,
       });
     } catch (e) {
       MyDialog.circularProgressStop(state.context);
       MyDialog.info(
         context: state.context,
-        title: 'Firestore getCommentList error',
+        title: 'Firestore getPhotoMemoList error',
         content: '$e',
       );
     }

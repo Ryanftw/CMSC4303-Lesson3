@@ -1,10 +1,14 @@
+import 'package:Assignment3/controller/firebasecontroller.dart';
+import 'package:Assignment3/model/comment.dart';
 import 'package:Assignment3/model/constant.dart';
 import 'package:Assignment3/model/photomemo.dart';
+import 'package:Assignment3/screen/myview/mydialog.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
 import 'addcomment_screen.dart';
 import 'myview/myimage.dart';
+import 'viewcomments_screen.dart';
 
 class SharedWithScreen extends StatefulWidget {
   static const routeName = '/sharedWithScreen';
@@ -18,6 +22,7 @@ class _SharedWithState extends State<SharedWithScreen> {
   _Controller con;
   User user;
   List<PhotoMemo> photoMemoList;
+  // List<Comment> commentList;
 
   @override
   void initState() {
@@ -31,6 +36,7 @@ class _SharedWithState extends State<SharedWithScreen> {
   Widget build(BuildContext context) {
     Map args = ModalRoute.of(context).settings.arguments;
     user ??= args[Constant.ARG_USER];
+    // commentList ??= args[Constant.ARG_COMMENTS];
     photoMemoList ??= args[Constant.ARG_PHOTOMEMOLIST];
     return Scaffold(
       appBar: AppBar(
@@ -41,6 +47,24 @@ class _SharedWithState extends State<SharedWithScreen> {
               "No PhotoMemos shared with me",
               style: Theme.of(context).textTheme.headline5,
             )
+          // : Padding(
+          //     padding: EdgeInsets.all(8.0),
+          //     child: GridView.builder(
+          //       gridDelegate: SliverGridDelegateWithMaxCrossAxisExtent(
+          //         maxCrossAxisExtent: 200,
+          //         childAspectRatio: 3 / 2,
+          //         crossAxisSpacing: 20,
+          //         mainAxisSpacing: 20,
+          //       ),
+          //       itemCount: photoMemoList.length,
+          //       itemBuilder: (context, index) => Container(
+          //         alignment: Alignment.center,
+          //         child: MyImage.network(
+          //           url: photoMemoList[index].photoURL,
+          //           context: context,
+          //         ),
+          //       ),
+          //     ),
           : ListView.builder(
               itemCount: photoMemoList.length,
               itemBuilder: (context, index) => Card(
@@ -60,14 +84,14 @@ class _SharedWithState extends State<SharedWithScreen> {
                     Row(
                       children: [
                         Expanded(
-                          flex: 3,
+                          flex: 5,
                           child: Text(
                             "Title: ${photoMemoList[index].title}",
                             style: Theme.of(context).textTheme.headline6,
                           ),
                         ),
                         Expanded(
-                          flex: 1,
+                          flex: 3,
                           child: RaisedButton(
                             onPressed: () => con.addComment(index),
                             child: Text("Add Comment"),
@@ -75,8 +99,22 @@ class _SharedWithState extends State<SharedWithScreen> {
                         ),
                       ],
                     ),
-                    Text(
-                      "Memo: ${photoMemoList[index].memo}",
+                    Row(
+                      children: [
+                        Expanded(
+                          flex: 5,
+                          child: Text(
+                            "Memo: ${photoMemoList[index].memo}",
+                          ),
+                        ),
+                        Expanded(
+                          flex: 3,
+                          child: RaisedButton(
+                            onPressed: () => con.viewComments(index),
+                            child: Text("View Comments"),
+                          ),
+                        ),
+                      ],
                     ),
                     Text(
                       "Created By: ${photoMemoList[index].createdBy}",
@@ -105,5 +143,23 @@ class _Controller {
       Constant.ARG_ONE_PHOTOMEMO: state.photoMemoList[index],
     });
     // Navigator.pop(state.context);
+  }
+
+  void viewComments(int index) async {
+    try {
+      List<Comment> comments = await FirebaseController.getCommentList(
+          docId: state.photoMemoList[index].photoURL);
+      Navigator.pushNamed(state.context, ViewCommentsScreen.routeName, arguments: {
+        Constant.ARG_USER: state.user,
+        Constant.ARG_ONE_PHOTOMEMO: state.photoMemoList[index],
+        Constant.ARG_COMMENTS: comments,
+      });
+    } catch (e) {
+      MyDialog.info(
+        context: state.context,
+        title: "Firebase Comments Error",
+        content: "$e",
+      );
+    }
   }
 }

@@ -7,7 +7,7 @@ class Comment {
 
   static const COMMENT = 'comment';
   static const COMMENT_BY = 'commentBy';
-  static const COMMENT_DOC_ID = 'commentDocId';
+  static const COMMENT_DOC_ID = 'commentDocId'; // the id of the image stored in firestore
   static const PHOTO_COMMENT_ID = 'photoCommentId';
   static const TIMESTAMP = 'timestamp';
 
@@ -25,7 +25,7 @@ class Comment {
       COMMENT_BY: this.commentBy,
       COMMENT_DOC_ID: this.commentDocId,
       TIMESTAMP: this.timestamp,
-      // PHOTO_COMMENT_ID: this.photoCommentId,
+      PHOTO_COMMENT_ID: this.photoCommentId,
     };
   }
 
@@ -37,7 +37,9 @@ class Comment {
       commentDocId: doc[COMMENT_DOC_ID],
       timestamp: doc[TIMESTAMP] == null
           ? null
-          : DateTime.fromMillisecondsSinceEpoch(doc[TIMESTAMP].millisecondsSinceEpoch),
+          : DateTime.fromMillisecondsSinceEpoch(
+              doc[TIMESTAMP].millisecondsSinceEpoch,
+            ),
     );
   }
 }

@@ -3,6 +3,7 @@ import 'package:Assignment3/model/comment.dart';
 import 'package:Assignment3/model/constant.dart';
 import 'package:Assignment3/model/photomemo.dart';
 import 'package:Assignment3/screen/addphotomemo_screen.dart';
+import 'package:Assignment3/screen/profilesettings_screen.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
@@ -21,9 +22,10 @@ class UserHomeScreen extends StatefulWidget {
 
 class _UserHomeState extends State<UserHomeScreen> {
   _Controller con;
+  String profileURL;
   User user;
   List<PhotoMemo> photoMemoList;
-  List<Comment> commentList;
+  // List<Comment> commentList;
   GlobalKey<FormState> formKey = GlobalKey<FormState>();
 
   @override
@@ -38,8 +40,9 @@ class _UserHomeState extends State<UserHomeScreen> {
   Widget build(BuildContext context) {
     Map args = ModalRoute.of(context).settings.arguments;
     user ??= args[Constant.ARG_USER];
-    commentList ??= args[Constant.ARG_COMMENT];
+    // commentList ??= args[Constant.ARG_COMMENTS];
     photoMemoList ??= args[Constant.ARG_PHOTOMEMOLIST];
+    // profileURL = user.photoURL;
 
     return WillPopScope(
       onWillPop: () => Future.value(false), // Android back button disabled
@@ -76,11 +79,18 @@ class _UserHomeState extends State<UserHomeScreen> {
           child: ListView(
             children: [
               UserAccountsDrawerHeader(
-                currentAccountPicture: Icon(
-                  Icons.person,
-                  size: 100.0,
-                ),
-                accountName: Text("Not set"),
+                currentAccountPicture: user.photoURL == null
+                    ? Icon(
+                        Icons.person,
+                        size: 100.0,
+                      )
+                    : MyImage.network(
+                        url: user.photoURL,
+                        context: context,
+                      ),
+                accountName: user.displayName == null
+                    ? Text("Not set")
+                    : Text("${user.displayName}"),
                 accountEmail: Text(user.email),
               ),
               ListTile(
@@ -91,7 +101,7 @@ class _UserHomeState extends State<UserHomeScreen> {
               ListTile(
                 leading: Icon(Icons.settings),
                 title: Text("Settings"),
-                onTap: null, //con.settings,
+                onTap: con.settings,
               ),
               ListTile(
                 leading: Icon(Icons.exit_to_app),
@@ -110,33 +120,56 @@ class _UserHomeState extends State<UserHomeScreen> {
                 "No PhotoMemos Found!",
                 style: Theme.of(context).textTheme.headline5,
               )
-            : ListView.builder(
+            : GridView.builder(
+                gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount: 2,
+                    mainAxisSpacing: 2,
+                    crossAxisSpacing: 1,
+                    childAspectRatio: 1.25),
                 itemCount: photoMemoList.length,
-                itemBuilder: (BuildContext context, int index) => Container(
-                  color: con.delIndex != null && con.delIndex == index
-                      ? Theme.of(context).highlightColor
-                      : Theme.of(context).scaffoldBackgroundColor,
-                  child: ListTile(
-                    leading: MyImage.network(
-                      url: photoMemoList[index].photoURL,
-                      context: context,
-                    ), // leading parameter of listTile
-                    trailing: Icon(Icons.keyboard_arrow_right),
-                    title: Text(photoMemoList[index].title),
-                    subtitle: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(photoMemoList[index].memo.length >= 20
-                            ? photoMemoList[index].memo.substring(0, 20) + '...'
-                            : photoMemoList[index].memo),
-                        Text('Created By: ${photoMemoList[index].createdBy}'),
-                        Text('Shared with: ${photoMemoList[index].sharedWith}'),
-                        Text('Updated At: ${photoMemoList[index].timestamp}'),
-                      ],
+                itemBuilder: (context, index) => Stack(
+                  children: [
+                    Expanded(
+                      flex: 1,
+                      child: Container(
+                        height: MediaQuery.of(context).size.height * 1,
+                        width: MediaQuery.of(context).size.width * 1,
+                        child: RaisedButton.icon(
+                          color: Colors.grey[800],
+                          // alignment: Alignment.center,
+                          icon: MyImage.network(
+                            url: photoMemoList[index].photoURL,
+                            context: context,
+                          ),
+                          label: Text(
+                            "",
+                          ),
+                          onLongPress: () => con.onLongPress(index),
+                          onPressed: () => con.onTap(index),
+                        ),
+                      ),
                     ),
-                    onTap: () => con.onTap(index),
-                    onLongPress: () => con.onLongPress(index),
-                  ),
+                    photoMemoList[index].notification == true
+                        ? Positioned(
+                            top: 1.0,
+                            right: 1.0,
+                            child: IconButton(
+                              icon: Icon(
+                                Icons.chat,
+                                color: Colors.yellow,
+                              ),
+                              onPressed: null,
+                              iconSize: 18,
+                            ),
+                          )
+                        : Positioned(
+                            bottom: 10.0,
+                            right: 10.0,
+                            child: (SizedBox(
+                              height: 1.0,
+                            )),
+                          ),
+                  ],
                 ),
               ),
       ),
@@ -187,7 +220,6 @@ class _Controller {
     state.render(() {});
   }
 
-  List<PhotoMemo> photoMemoList;
   void sharedWithMe() async {
     try {
       List<PhotoMemo> photoMemoList = await FirebaseController.getPhotoMemoSharedWithMe(
@@ -205,24 +237,6 @@ class _Controller {
         content: '$e',
       );
     }
-
-    try {
-      List<Comment> commentList =
-          await FirebaseController.getCommentList(email: user.email);
-      MyDialog.circularProgressStop(state.context);
-      Navigator.pushNamed(state.context, UserHomeScreen.routeName, arguments: {
-        Constant.ARG_USER: user,
-        Constant.ARG_PHOTOMEMOLIST: photoMemoList,
-        Constant.COMMENT_COLLECTION: commentList,
-      });
-    } catch (e) {
-      MyDialog.circularProgressStop(state.context);
-      MyDialog.info(
-        context: state.context,
-        title: 'Firestore getCommentList error',
-        content: '$e',
-      );
-    }
   }
 
   void onLongPress(int index) {
@@ -232,6 +246,12 @@ class _Controller {
 
   void cancelDelete() {
     state.render(() => delIndex = null);
+  }
+
+  void settings() {
+    Navigator.pushNamed(state.context, ProfileSettingsScreen.routeName, arguments: {
+      Constant.ARG_USER: state.user,
+    });
   }
 
   void delete() async {

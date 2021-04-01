@@ -6,9 +6,11 @@ import 'package:flutter/material.dart';
 
 import 'model/constant.dart';
 import 'screen/addcomment_screen.dart';
+import 'screen/profilesettings_screen.dart';
 import 'screen/sharedwith_screen.dart';
 import 'screen/signin_screen.dart';
 import 'screen/signup_screen.dart';
+import 'screen/viewcomments_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -34,6 +36,8 @@ class PhotoMemoApp extends StatelessWidget {
           SignUpScreen.routeName: (context) => SignUpScreen(),
           SharedWithScreen.routeName: (context) => SharedWithScreen(),
           AddCommentScreen.routeName: (context) => AddCommentScreen(),
+          ViewCommentsScreen.routeName: (context) => ViewCommentsScreen(),
+          ProfileSettingsScreen.routeName: (context) => ProfileSettingsScreen(),
         });
   }
 }

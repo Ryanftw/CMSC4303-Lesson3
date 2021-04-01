@@ -1,4 +1,5 @@
 import 'package:Assignment3/controller/firebasecontroller.dart';
+import 'package:Assignment3/model/profile.dart';
 import 'package:flutter/material.dart';
 
 import 'myview/mydialog.dart';
@@ -117,6 +118,7 @@ class _Controller {
 
     try {
       await FirebaseController.createAccount(email: email, password: password);
+
       MyDialog.info(
         context: state.context,
         title: "Account created!",
@@ -144,7 +146,7 @@ class _Controller {
 
   String validatePassword(String value) {
     if (value.length < 6)
-      "Too short";
+      return "Too short";
     else
       return null;
   }
