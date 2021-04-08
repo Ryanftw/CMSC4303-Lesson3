@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:Assignment3/controller/firebasecontroller.dart';
 import 'package:Assignment3/model/constant.dart';
 import 'package:Assignment3/model/photomemo.dart';
+import 'package:Assignment3/model/profile.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
@@ -21,7 +22,9 @@ class ProfileSettingsScreen extends StatefulWidget {
 class _ProfileSettingsState extends State<ProfileSettingsScreen> {
   _Controller con;
   User user;
-  String photourl;
+  Profile profile;
+  Profile tempProfile;
+  // String photourl;
 
   bool editMode = false;
   GlobalKey<FormState> formKey = GlobalKey<FormState>();
@@ -39,6 +42,9 @@ class _ProfileSettingsState extends State<ProfileSettingsScreen> {
   Widget build(BuildContext context) {
     Map args = ModalRoute.of(context).settings.arguments;
     user ??= args[Constant.ARG_USER];
+    profile ??= args[Constant.ARG_ONE_PROFILE];
+    // profile == null ? tempProfile = new Profile() : tempProfile = Profile.clone(profile);
+    tempProfile ??= Profile.clone(profile);
     return Scaffold(
       appBar: AppBar(
         title: Text("Profile Screen"),
@@ -57,19 +63,24 @@ class _ProfileSettingsState extends State<ProfileSettingsScreen> {
                 children: [
                   Container(
                     height: MediaQuery.of(context).size.height * 0.4,
-                    child: user.photoURL == null
-                        ? con.photoFile == null
+                    child: con.photoFile == null
+                        ? profile.url == null
                             ? Icon(
-                                Icons.supervised_user_circle,
+                                Icons.person,
                                 size: 300,
                               )
-                            : Image.file(
-                                con.photoFile,
-                                fit: BoxFit.fill,
-                              )
-                        : MyImage.network(
-                            url: user.photoURL,
-                            context: context,
+                            : profile.url == ""
+                                ? Icon(
+                                    Icons.person,
+                                    size: 300,
+                                  )
+                                : MyImage.network(
+                                    url: profile.url,
+                                    context: context,
+                                  )
+                        : Image.file(
+                            con.photoFile,
+                            fit: BoxFit.fill,
                           ),
                   ),
                   editMode
@@ -122,7 +133,7 @@ class _ProfileSettingsState extends State<ProfileSettingsScreen> {
                 decoration: InputDecoration(
                   hintText: "Name",
                 ),
-                // initialValue: onePhotoMemoTemp.memo,
+                initialValue: profile == null ? "${user.email}" : "${profile.name}",
                 autocorrect: false,
                 keyboardType: TextInputType.name,
                 maxLines: 1,
@@ -135,7 +146,7 @@ class _ProfileSettingsState extends State<ProfileSettingsScreen> {
                 decoration: InputDecoration(
                   hintText: "Age",
                 ),
-                initialValue: "",
+                initialValue: profile == null ? "-1" : "${profile.age}",
                 // autocorrect: true,
                 // keyboardType: TextInputType.values,
                 maxLines: 1,
@@ -148,7 +159,8 @@ class _ProfileSettingsState extends State<ProfileSettingsScreen> {
                 decoration: InputDecoration(
                   hintText: "Display Name",
                 ),
-                initialValue: user.displayName,
+                initialValue:
+                    profile == null ? "${user.email}" : "${profile.displayName}",
                 autocorrect: false,
                 keyboardType: TextInputType.multiline,
                 maxLines: 2,
@@ -180,7 +192,7 @@ class _Controller {
   }
 
   void saveName(String value) {
-    name = value;
+    state.tempProfile.name = value;
   }
 
   String validateAge(String value) {
@@ -196,7 +208,7 @@ class _Controller {
   }
 
   void saveAge(String value) {
-    age = value;
+    state.tempProfile.age = value;
   }
 
   String validateDisplayName(String value) {
@@ -205,45 +217,81 @@ class _Controller {
   }
 
   void saveDisplayName(String value) {
-    userName = value;
+    state.tempProfile.displayName = value;
   }
 
   void update() async {
     if (!state.formKey.currentState.validate()) return;
-    if (photoFile == null) return;
     state.formKey.currentState.save();
+    state.editMode = false;
 
+    Map<String, dynamic> updateInfo = {};
+    if (state.profile.age != state.tempProfile.age) {
+      updateInfo[Profile.AGE] = state.tempProfile.age;
+    }
+    if (state.profile.displayName != state.tempProfile.displayName) {
+      updateInfo[Profile.DISPLAY_NAME] = state.tempProfile.displayName;
+    }
+    if (state.profile.name != state.tempProfile.name) {
+      updateInfo[Profile.NAME] = state.tempProfile.name;
+    }
     MyDialog.circularProgressStart(state.context);
-    try {
-      Map photoInfo = await FirebaseController.uploadPhotoFile(
-        photo: photoFile,
-        uid: state.user.uid,
-        listener: (double progress) {
-          state.render(() {
-            if (progress == null)
-              state.progressMessage = null;
-            else {
-              progress *= 100;
-              state.progressMessage = 'Uploading: ' + progress.toStringAsFixed(1) + ' %';
-            }
-          });
-        },
-      );
-      String photoFileName = photoInfo[Constant.ARG_FILENAME];
-      String photoURL = photoInfo[Constant.ARG_DOWNLOADURL];
-      state.user.updateProfile(
-          displayName: userName, photoURL: photoInfo[Constant.ARG_DOWNLOADURL]);
-      // await FirebaseController.updateProfile(state.user.email, photoInfo);
-      MyDialog.circularProgressStop(state.context);
-      Navigator.pop(state.context);
-      print(state.user.photoURL);
-    } catch (e) {
-      MyDialog.circularProgressStop(state.context);
-      MyDialog.info(
-        context: state.context,
-        title: 'Update Profile Error',
-        content: '$e',
-      );
+    if (photoFile != null) {
+      try {
+        Map photoInfo = await FirebaseController.uploadPhotoFile(
+          photo: photoFile,
+          uid: state.user.uid,
+          listener: (double progress) {
+            state.render(() {
+              if (progress == null)
+                state.progressMessage = null;
+              else {
+                progress *= 100;
+                state.progressMessage =
+                    'Uploading: ' + progress.toStringAsFixed(1) + ' %';
+              }
+            });
+          },
+        );
+        state.tempProfile.profileFilename = photoInfo[Constant.ARG_FILENAME];
+        updateInfo[Profile.PROFILE_FILENAME] = photoInfo[Constant.ARG_FILENAME];
+        if (state.profile.profileFilename != "") {
+          await FirebaseController.deleteProfilePicture(state.profile.profileFilename);
+        }
+        // state.user.updateProfile(
+        //     displayName: userName, photoURL: photoInfo[Constant.ARG_DOWNLOADURL]);
+        updateInfo[Profile.URL] = photoInfo[Constant.ARG_DOWNLOADURL];
+        state.tempProfile.url = photoInfo[Constant.ARG_DOWNLOADURL];
+        state.user.updateProfile(
+            displayName: state.tempProfile.displayName, photoURL: state.tempProfile.url);
+        await FirebaseController.updateProfile(state.tempProfile.docId, updateInfo);
+        state.profile.assign(state.tempProfile);
+        MyDialog.circularProgressStop(state.context);
+        Navigator.pop(state.context);
+      } catch (e) {
+        MyDialog.circularProgressStop(state.context);
+        MyDialog.info(
+          context: state.context,
+          title: 'Update Profile Error',
+          content: '$e',
+        );
+      }
+    } else {
+      try {
+        state.user.updateProfile(
+            displayName: state.tempProfile.displayName, photoURL: state.tempProfile.url);
+        await FirebaseController.updateProfile(state.tempProfile.docId, updateInfo);
+        state.profile.assign(state.tempProfile);
+        MyDialog.circularProgressStop(state.context);
+        Navigator.pop(state.context);
+      } catch (e) {
+        MyDialog.circularProgressStop(state.context);
+        MyDialog.info(
+          context: state.context,
+          title: 'Update Profile Error',
+          content: '$e',
+        );
+      }
     }
   }
 

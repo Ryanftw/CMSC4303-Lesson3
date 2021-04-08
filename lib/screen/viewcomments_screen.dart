@@ -70,9 +70,21 @@ class _ViewCommentsState extends State<ViewCommentsScreen> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
+                          // Center(
                           Center(
                             child: Column(
                               children: [
+                                commentList[index].userProfilePic == null
+                                    ? SizedBox(height: 1.0)
+                                    : Container(
+                                        height: 40,
+                                        width: 40,
+                                        child: MyImage.network(
+                                            url: commentList[index].userProfilePic,
+                                            context: context),
+                                      ),
+                                // Row(
+                                //   children: [
                                 Text(
                                   "${commentList[index].comment}",
                                   style: Theme.of(context).textTheme.headline6,
@@ -85,9 +97,25 @@ class _ViewCommentsState extends State<ViewCommentsScreen> {
                                   "${commentList[index].timestamp}",
                                   style: null,
                                 ),
+                                SizedBox(
+                                  height: 40,
+                                  width: 15.0,
+                                ),
+                                // commentList[index].userProfilePic == null
+                                //     ? SizedBox(height: 1.0)
+                                //     : Container(
+                                //         height: 40,
+                                //         width: 40,
+                                //         child: MyImage.network(
+                                //             url: commentList[index].userProfilePic,
+                                //             context: context),
+                                //       ),
+                                //   ],
+                                // ),
                               ],
                             ),
                           ),
+                          // ),
                         ],
                       ),
                     ),

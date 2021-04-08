@@ -4,7 +4,9 @@ import 'dart:io';
 import 'package:Assignment3/controller/firebasecontroller.dart';
 import 'package:Assignment3/model/comment.dart';
 import 'package:Assignment3/model/constant.dart';
+import 'package:Assignment3/model/likes.dart';
 import 'package:Assignment3/model/photomemo.dart';
+import 'package:Assignment3/screen/viewlikes_screen.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/Material.dart';
 import 'package:flutter/foundation.dart';
@@ -27,6 +29,7 @@ class _DetailedViewState extends State<DetailedViewScreen> {
   User user;
   PhotoMemo onePhotoMemoOriginal;
   PhotoMemo onePhotoMemoTemp;
+  List<Comment> commentList;
   bool editMode = false;
   GlobalKey<FormState> formKey = GlobalKey<FormState>();
   String progressMessage;
@@ -37,13 +40,14 @@ class _DetailedViewState extends State<DetailedViewScreen> {
     con = _Controller(this);
   }
 
-  // @override
   void render(fn) => setState(fn);
 
   @override
   Widget build(BuildContext context) {
     Map args = ModalRoute.of(context).settings.arguments;
     user ??= args[Constant.ARG_USER];
+    commentList ??= args[Constant.ARG_COMMENTS];
+    // userLikes ??= args[Constant.ARG_LIKES];
     onePhotoMemoOriginal ??= args[Constant.ARG_ONE_PHOTOMEMO];
     onePhotoMemoTemp ??= PhotoMemo.clone(onePhotoMemoOriginal);
     return Scaffold(
@@ -156,6 +160,10 @@ class _DetailedViewState extends State<DetailedViewScreen> {
                 validator: PhotoMemo.validateMemo,
                 onSaved: con.saveMemo,
               ),
+              RaisedButton(
+                onPressed: con.viewLikes,
+                child: Text("View Likes"),
+              ),
               TextFormField(
                 enabled: editMode,
                 style: Theme.of(context).textTheme.headline6,
@@ -207,6 +215,17 @@ class _Controller {
     // state.render(() => state.editMode = false);
 
     try {
+      List<dynamic> tempList = state.onePhotoMemoTemp.likedBy;
+      List<Comment> removeCommentsList = new List<Comment>();
+      List<Comment> tempCommentsList = new List<Comment>();
+      List<Likes> tempLikesList;
+      List<Likes> removeLikesList = new List<Likes>();
+      tempLikesList =
+          await FirebaseController.getOnePhotoLikes(state.onePhotoMemoOriginal.photoURL);
+      for (var c in state.commentList) {
+        tempCommentsList.add(Comment.clone(c));
+      }
+      bool likesDeleted = false;
       bool commentsDeleted = false;
       MyDialog.circularProgressStart(state.context);
       Map<String, dynamic> updateInfo =
@@ -228,9 +247,14 @@ class _Controller {
               });
             });
         commentsDeleted = true;
-        print('${state.onePhotoMemoOriginal.photoURL}');
+        likesDeleted = true;
+        await FirebaseController.deletePhotoLikes(state.onePhotoMemoOriginal.photoURL);
         await FirebaseController.deletePhotoMemoComments(
             docId: state.onePhotoMemoOriginal.photoURL);
+
+        updateInfo[PhotoMemo.COMMENTS] = 0;
+        updateInfo[PhotoMemo.NOTIFICATION] = 'false';
+        updateInfo[PhotoMemo.LIKE_NOTIFICATION] = 'false';
 
         state.onePhotoMemoTemp.photoURL = photoInfo[Constant.ARG_DOWNLOADURL];
         state.render(() => state.progressMessage = 'ML image labeler started');
@@ -238,6 +262,8 @@ class _Controller {
             await FirebaseController.getImageLabels(photoFile: photoFile);
         state.onePhotoMemoTemp.imageLabels = labels;
 
+        updateInfo[PhotoMemo.LIKES] = 0;
+        updateInfo[PhotoMemo.LIKED_BY] = [];
         updateInfo[PhotoMemo.PHOTO_URL] = photoInfo[Constant.ARG_DOWNLOADURL];
         updateInfo[PhotoMemo.IMAGE_LABELS] = labels;
       }
@@ -248,22 +274,65 @@ class _Controller {
       if (state.onePhotoMemoOriginal.memo != state.onePhotoMemoTemp.memo)
         updateInfo[PhotoMemo.MEMO] = state.onePhotoMemoTemp.memo;
       if (!listEquals(
-          state.onePhotoMemoOriginal.sharedWith, state.onePhotoMemoTemp.sharedWith)) {
+          state.onePhotoMemoOriginal.sharedWith, state.onePhotoMemoTemp.sharedWith))
         updateInfo[PhotoMemo.SHARED_WITH] = state.onePhotoMemoTemp.sharedWith;
-        if (!commentsDeleted) {
-          List<Comment> comments = await FirebaseController.getCommentList(
-              docId: state.onePhotoMemoOriginal.photoURL);
-          for (Comment comment in comments) {
-            if (!state.onePhotoMemoTemp.sharedWith.contains(comment.commentBy)) {
-              await FirebaseController.deletePhotoComment(docId: comment.commentBy);
-            }
+      if (!commentsDeleted) {
+        for (var c in tempCommentsList) {
+          if (state.onePhotoMemoTemp.sharedWith.isEmpty ||
+              !state.onePhotoMemoTemp.sharedWith.contains(c.commentBy)) {
+            await FirebaseController.deletePhotoComment(docId: c.docId);
+            removeCommentsList.add(c);
           }
         }
       }
-
-      updateInfo[PhotoMemo.TIMESTAMP] = DateTime.now();
-      await FirebaseController.updatePhotoMemo(state.onePhotoMemoTemp.docID, updateInfo);
-
+      if (!commentsDeleted) {
+        for (var c in removeCommentsList) {
+          tempCommentsList.remove(c);
+        }
+      }
+      bool commentNotification = false;
+      if (!commentsDeleted) {
+        for (var c in tempCommentsList) {
+          if (c.timestamp.isAfter(state.onePhotoMemoOriginal.lastViewed)) {
+            commentNotification = true;
+          }
+        }
+      }
+      if (!likesDeleted) {
+        for (var l in tempLikesList) {
+          if (!state.onePhotoMemoTemp.sharedWith.contains(l.likedBy)) {
+            await FirebaseController.deleteLike(l.docId);
+            removeLikesList.add(l);
+          }
+        }
+      }
+      if (!likesDeleted) {
+        for (var l in removeLikesList) {
+          tempLikesList.remove(l);
+        }
+      }
+      bool likeNotification = false;
+      if (!likesDeleted) {
+        for (var l in tempLikesList) {
+          tempList.add(l.likedBy);
+          if (l.timestamp.isAfter(state.onePhotoMemoOriginal.likesLastViewed)) {
+            likeNotification = true;
+          }
+        }
+      }
+      state.commentList.clear();
+      state.commentList.addAll(tempCommentsList);
+      state.onePhotoMemoTemp.likedBy.clear();
+      if (tempList.isNotEmpty) {
+        state.onePhotoMemoTemp.likedBy.addAll(tempList);
+      }
+      updateInfo[PhotoMemo.LIKED_BY] = tempList;
+      updateInfo[PhotoMemo.LIKES] = tempLikesList.length;
+      updateInfo[PhotoMemo.NOTIFICATION] = commentNotification;
+      updateInfo[PhotoMemo.LIKE_NOTIFICATION] = likeNotification;
+      state.onePhotoMemoTemp.notification = commentNotification;
+      state.onePhotoMemoTemp.likeNotification = likeNotification;
+      FirebaseController.updatePhotoMemo(state.onePhotoMemoOriginal.docID, updateInfo);
       state.onePhotoMemoOriginal.assign(state.onePhotoMemoTemp);
       MyDialog.circularProgressStop(state.context);
       Navigator.pop(state.context);
@@ -271,6 +340,28 @@ class _Controller {
       MyDialog.circularProgressStop(state.context);
       MyDialog.info(
           context: state.context, title: 'Update photoMemo error', content: '$e');
+    }
+  }
+
+  void viewLikes() async {
+    try {
+      List<Likes> tempLikes =
+          await FirebaseController.getOnePhotoLikes(state.onePhotoMemoOriginal.photoURL);
+      state.onePhotoMemoOriginal.likeNotification = false;
+      Map<String, dynamic> updateLikedLastViewed = {};
+      state.onePhotoMemoOriginal.likesLastViewed = DateTime.now();
+      updateLikedLastViewed[PhotoMemo.LIKES_LAST_VIEWED] =
+          state.onePhotoMemoOriginal.likesLastViewed;
+      await FirebaseController.updateLastViewed(
+          state.onePhotoMemoOriginal.docID, updateLikedLastViewed);
+      Navigator.pushNamed(state.context, ViewLikesScreen.routeName, arguments: {
+        Constant.ARG_USER: state.user,
+        Constant.ARG_LIKES: tempLikes,
+        Constant.ARG_ONE_PHOTOMEMO: state.onePhotoMemoOriginal,
+      });
+    } catch (e) {
+      MyDialog.info(
+          context: state.context, title: "View Likes Error!", content: e.toString());
     }
   }
 
@@ -317,26 +408,6 @@ class _Controller {
     }
   }
 
-  // void getPhoto(String src) async {
-  //   // defined above as Popupmenubutton<String> --> This is why it receives a string
-  //   try {
-  //     PickedFile _imageFile;
-  //     var _picker = ImagePicker();
-  //     if (src == Constant.SRC_CAMERA) {
-  //       _imageFile = await _picker.getImage(source: ImageSource.camera);
-  //     } else {
-  //       _imageFile = await _picker.getImage(source: ImageSource.gallery);
-  //     }
-  //     if (_imageFile == null) return; //Selection canceled
-  //     state.render(() => state.photo = File(_imageFile.path));
-  //   } catch (e) {
-  //     MyDialog.info(
-  //       context: state.context,
-  //       title: "Failed to get picture",
-  //       content: '$e',
-  //     );
-  //   }
-
   void saveTitle(String value) {
     state.onePhotoMemoTemp.title = value;
   }
@@ -349,6 +420,8 @@ class _Controller {
     if (value.trim().length != 0) {
       state.onePhotoMemoTemp.sharedWith =
           value.split(RegExp('(,| )+')).map((e) => e.trim()).toList();
+    } else {
+      state.onePhotoMemoTemp.sharedWith.clear();
     }
   }
 }

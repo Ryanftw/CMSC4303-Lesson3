@@ -2,12 +2,14 @@ import 'dart:io';
 
 import 'package:Assignment3/model/comment.dart';
 import 'package:Assignment3/model/constant.dart';
+import 'package:Assignment3/model/likes.dart';
 import 'package:Assignment3/model/photomemo.dart';
 import 'package:Assignment3/model/profile.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_ml_vision/firebase_ml_vision.dart';
 import 'package:firebase_storage/firebase_storage.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
 class FirebaseController {
@@ -26,12 +28,6 @@ class FirebaseController {
       email: email,
       password: password,
     );
-    await FirebaseFirestore.instance
-        .collection(Constant.PROFILE_COLLECTION)
-        .add(new Profile(email: email).serialize());
-    //     .then((result) {
-    //   return result.user.updateProfile(displayName: name);
-    // });
   }
 
   static Future<void> signOut() async {
@@ -59,12 +55,18 @@ class FirebaseController {
     };
   }
 
-  static Future<String> updateProfile(String email, Map<String, dynamic> pInfo) async {
-    FirebaseFirestore.instance
+  static Future<void> updateProfile(String docId, Map<String, dynamic> updateInfo) async {
+    await FirebaseFirestore.instance
         .collection(Constant.PROFILE_COLLECTION)
-        .where(Profile.EMAIL, isEqualTo: email)
-        .get();
-    // await FirebaseFirestore.instance.collection(Constant.PROFILE_COLLECTION).doc(p)
+        .doc(docId)
+        .update(updateInfo);
+  }
+
+  static Future<void> updateLike(String docId, Map<String, dynamic> updateInfo) async {
+    await FirebaseFirestore.instance
+        .collection(Constant.LIKES_COLLECTION)
+        .doc(docId)
+        .update(updateInfo);
   }
 
   static Future<String> addPhotoMemo(PhotoMemo photoMemo) async {
@@ -89,7 +91,6 @@ class FirebaseController {
         .get();
     var result = <PhotoMemo>[];
     querySnapshot.docs.forEach((doc) {
-      // LOOK A THIS. FOR EACH --> IF THE COMMENT.COMMENTID == PHOTOMEMO.PHOTOURL && COMMENT.TIMESTAMP > PHOTOMEMO.LASTVIEWED -> KEEP THE PHOTOMEMO
       result.add(PhotoMemo.deserialize(doc.data(), doc.id));
     });
     return result;
@@ -104,6 +105,57 @@ class FirebaseController {
     var result = <Comment>[];
     querySnapshot.docs.forEach((doc) {
       result.add(Comment.deserialize(doc.data(), doc.id));
+    });
+    return result;
+  }
+
+  // static Future<List<Likes>> getUserMemoLikes({@required String docId}) async {
+  //   QuerySnapshot querySnapshot = await FirebaseFirestore.instance
+  //       .collection(Constant.LIKES_COLLECTION)
+  //       .where(Likes.LIKE_ON, isEqualTo: docId)
+  //       .orderBy(Likes.TIMESTAMP, descending: true)
+  //       .get();
+  //   var result = <Likes>[];
+  //   querySnapshot.docs.forEach((doc) {
+  //     result.add(Likes.deserialize(doc.data(), doc.id));
+  //   });
+  //   return result;
+  // }
+
+  static Future<List<Likes>> getUserLikes({@required String email}) async {
+    QuerySnapshot querySnapshot = await FirebaseFirestore.instance
+        .collection(Constant.LIKES_COLLECTION)
+        .where(Likes.LIKE_ON, isEqualTo: email)
+        .orderBy(Likes.TIMESTAMP, descending: true)
+        .get();
+    var result = <Likes>[];
+    querySnapshot.docs.forEach((doc) {
+      result.add(Likes.deserialize(doc.data(), doc.id));
+    });
+    return result;
+  }
+
+  static Future<List<Likes>> getOnePhotoLikes(String memoURL) async {
+    QuerySnapshot querySnapshot = await FirebaseFirestore.instance
+        .collection(Constant.LIKES_COLLECTION)
+        .where(Likes.LIKE_DOC_ID, isEqualTo: memoURL)
+        .get();
+    var result = <Likes>[];
+    querySnapshot.docs.forEach((doc) {
+      result.add(Likes.deserialize(doc.data(), doc.id));
+    });
+    return result;
+  }
+
+  static Future<List<Likes>> getUserSharedLikes({@required String email}) async {
+    QuerySnapshot querySnapshot = await FirebaseFirestore.instance
+        .collection(Constant.LIKES_COLLECTION)
+        .where(Likes.LIKED_BY, isEqualTo: email)
+        .orderBy(Likes.TIMESTAMP, descending: true)
+        .get();
+    var result = <Likes>[];
+    querySnapshot.docs.forEach((doc) {
+      result.add(Likes.deserialize(doc.data(), doc.id));
     });
     return result;
   }
@@ -129,23 +181,31 @@ class FirebaseController {
         .update(updateInfo); // only the info that has been changed will be updated
   }
 
+  static Future<List<Profile>> getUserProfile(String userEmail) async {
+    QuerySnapshot querySnapshot = await FirebaseFirestore.instance
+        .collection(Constant.PROFILE_COLLECTION)
+        .where(Profile.EMAIL, isEqualTo: userEmail)
+        .get();
+    var result = <Profile>[];
+    querySnapshot.docs.forEach((doc) {
+      result.add(Profile.deserialize(doc.data(), doc.id));
+    });
+    return result;
+  }
+
+  static Future<String> addNewLike(Likes like) async {
+    var ref = await FirebaseFirestore.instance
+        .collection(Constant.LIKES_COLLECTION)
+        .add(like.serialize());
+    return ref.id;
+  }
+
   static Future<String> addNewProfile(Profile profile) async {
     var ref = await FirebaseFirestore.instance
         .collection(Constant.PROFILE_COLLECTION)
         .add(profile.serialize());
     return ref.id;
   }
-
-  // static Future<bool> validateUsername(String name) async {
-  //   QuerySnapshot querySnapshot = await FirebaseFirestore.instance
-  //       .collection(Constant.PROFILE_COLLECTION)
-  //       .where(Profile.DISPLAY_NAME, isEqualTo: name)
-  //       .get();
-  //   if (querySnapshot.size > 0)
-  //     return false;
-  //   else
-  //     return true;
-  // }
 
   static Future<void> updateLastViewed(
       String docId, Map<String, dynamic> updateLastViewed) async {
@@ -169,6 +229,10 @@ class FirebaseController {
     return result;
   }
 
+  static Future<void> deleteProfilePicture(String fileName) async {
+    await FirebaseStorage.instance.ref().child(fileName).delete();
+  }
+
   static Future<void> deletePhotoMemo(PhotoMemo p) async {
     await deletePhotoMemoComments(docId: p.photoURL);
 
@@ -179,13 +243,39 @@ class FirebaseController {
     await FirebaseStorage.instance.ref().child(p.photoFilename).delete();
   }
 
+  static Future<void> deleteLike(String docId) async {
+    await FirebaseFirestore.instance
+        .collection(Constant.LIKES_COLLECTION)
+        .doc(docId)
+        .delete();
+  }
+
+  static Future<void> deletePhotoLike(String docId) async {
+    await FirebaseFirestore.instance
+        .collection(Constant.LIKES_COLLECTION)
+        .doc(docId)
+        .delete();
+  }
+
+  static Future<void> deletePhotoLikes(String docId) async {
+    QuerySnapshot querySnapshot = await FirebaseFirestore.instance
+        .collection(Constant.LIKES_COLLECTION)
+        .where(Likes.LIKE_DOC_ID, isEqualTo: docId)
+        .get();
+    querySnapshot.docs.forEach((doc) async {
+      await FirebaseFirestore.instance
+          .collection(Constant.LIKES_COLLECTION)
+          .doc(doc.id)
+          .delete();
+    });
+  }
+
   static Future<void> deletePhotoMemoComments({@required String docId}) async {
     QuerySnapshot querySnapshot = await FirebaseFirestore.instance
         .collection(Constant.COMMENT_COLLECTION)
         .where(Comment.COMMENT_DOC_ID, isEqualTo: docId)
         .get();
     querySnapshot.docs.forEach((doc) async {
-      print('${doc.id}');
       await FirebaseFirestore.instance
           .collection(Constant.COMMENT_COLLECTION)
           .doc(doc.id)
@@ -193,18 +283,26 @@ class FirebaseController {
     });
   }
 
-  static Future<void> deletePhotoComment({@required String docId}) async {
-    QuerySnapshot querySnapshot = await FirebaseFirestore.instance
+  static Future<void> updateComment(String docId, Map<String, dynamic> update) async {
+    await FirebaseFirestore.instance
         .collection(Constant.COMMENT_COLLECTION)
-        .where(Comment.COMMENT_BY, isEqualTo: docId)
-        .get();
-    querySnapshot.docs.forEach((doc) async {
-      print('${doc.id}');
-      await FirebaseFirestore.instance
-          .collection(Constant.COMMENT_COLLECTION)
-          .doc(doc.id)
-          .delete();
-    });
+        .doc(docId)
+        .update(update);
+  }
+
+  static Future<void> deletePhotoComment({@required String docId}) async {
+    await FirebaseFirestore.instance
+        .collection(Constant.COMMENT_COLLECTION)
+        .doc(docId)
+        .delete();
+    //     .get();
+    // querySnapshot.docs.forEach((doc) async {
+    //   print('${doc.id}');
+    //   await FirebaseFirestore.instance
+    //       .collection(Constant.COMMENT_COLLECTION)
+    //       .doc(doc.id)
+    //       .delete();
+    // });
   }
 
   static Future<List<PhotoMemo>> searchImage({

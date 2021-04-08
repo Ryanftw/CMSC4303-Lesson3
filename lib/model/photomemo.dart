@@ -5,9 +5,15 @@ class PhotoMemo {
   String title;
   String photoFilename; // stored at Storage in firebase (non text database)
   String photoURL;
+  int numOfComments;
+  int likes;
   bool notification;
+  bool likeNotification;
   DateTime lastViewed;
+  DateTime likesLastViewed;
   DateTime timestamp;
+
+  List<dynamic> likedBy;
 
   List<dynamic>
       sharedWith; // List of emails // dynamic because String is not compatible with Firestore, but dynamic is anything
@@ -22,14 +28,22 @@ class PhotoMemo {
   static const PHOTO_FILENAME = 'photoFilename';
   static const TIMESTAMP = 'timestamp';
   static const LAST_VIEWED = 'lastViewed';
+  static const LIKES_LAST_VIEWED = 'likesLastViewed';
   static const SHARED_WITH = 'sharedWith';
+  static const LIKED_BY = 'likedBy';
+  static const LIKES = 'likes';
   static const IMAGE_LABELS = 'imageLabels';
-  static const IMAGE_COMMENTS = 'comments';
+  static const COMMENTS = 'numOfComments';
   static const NOTIFICATION = 'notification';
+  static const LIKE_NOTIFICATION = 'likeNotification';
 
   PhotoMemo({
+    this.numOfComments,
     this.docID,
+    this.likesLastViewed,
+    this.likes,
     this.createdBy,
+    this.likeNotification,
     this.memo,
     this.photoFilename,
     this.photoURL,
@@ -37,23 +51,31 @@ class PhotoMemo {
     this.title,
     this.sharedWith,
     this.imageLabels,
+    this.likedBy,
     this.lastViewed,
     this.notification,
   }) {
+    this.likedBy ??= [];
     this.sharedWith ??= []; // if the list is null, start with an empty list.
     this.imageLabels ??= [];
   }
 
   PhotoMemo.clone(PhotoMemo p) {
+    this.numOfComments = p.numOfComments;
     this.docID = p.docID;
     this.createdBy = p.createdBy;
+    this.likesLastViewed = p.likesLastViewed;
     this.memo = p.memo;
     this.photoFilename = p.photoFilename;
     this.photoURL = p.photoURL;
     this.title = p.title;
     this.timestamp = p.timestamp;
+    this.likeNotification = p.likeNotification;
     this.lastViewed = p.lastViewed;
-    this.notification;
+    this.notification = p.notification;
+    this.likes = p.likes;
+    this.likedBy = [];
+    this.likedBy.addAll(p.likedBy);
     this.sharedWith = [];
     this.sharedWith.addAll(p.sharedWith); // deep copy list
     this.imageLabels = [];
@@ -61,15 +83,21 @@ class PhotoMemo {
   }
 // a = b ===> a.assign(b)
   void assign(PhotoMemo p) {
+    this.numOfComments = p.numOfComments;
     this.docID = p.docID;
+    this.likesLastViewed = p.likesLastViewed;
     this.createdBy = p.createdBy;
+    this.likeNotification = p.likeNotification;
     this.memo = p.memo;
     this.photoFilename = p.photoFilename;
     this.photoURL = p.photoURL;
     this.title = p.title;
     this.timestamp = p.timestamp;
     this.lastViewed = p.lastViewed;
-    this.notification;
+    this.notification = p.notification;
+    this.likes = p.likes;
+    this.likedBy.clear();
+    this.likedBy.addAll(p.likedBy);
     this
         .sharedWith
         .clear(); // Clear first in case list has changed, then re-assign list values
@@ -83,6 +111,11 @@ class PhotoMemo {
 // from Dart object to Firestore document. Converts dart object to compatible type with firestore
   Map<String, dynamic> serialize() {
     return <String, dynamic>{
+      LIKED_BY: this.likedBy,
+      LIKES: this.likes,
+      LIKES_LAST_VIEWED: this.likesLastViewed,
+      LIKE_NOTIFICATION: this.likeNotification,
+      COMMENTS: this.numOfComments,
       TITLE: this.title,
       CREATED_BY: this.createdBy,
       MEMO: this.memo,
@@ -99,6 +132,11 @@ class PhotoMemo {
   static PhotoMemo deserialize(Map<String, dynamic> doc, String docId) {
     return PhotoMemo(
       docID: docId,
+      likedBy: doc[LIKED_BY],
+      likeNotification: doc[LIKE_NOTIFICATION],
+      // likesLastViewed: doc[LIKES_LAST_VIEWED],
+      likes: doc[LIKES],
+      numOfComments: doc[COMMENTS],
       createdBy: doc[CREATED_BY],
       title: doc[TITLE],
       memo: doc[MEMO],
@@ -110,6 +148,10 @@ class PhotoMemo {
       timestamp: doc[TIMESTAMP] == null
           ? null
           : DateTime.fromMillisecondsSinceEpoch(doc[TIMESTAMP].millisecondsSinceEpoch),
+      likesLastViewed: doc[LIKES_LAST_VIEWED] == null
+          ? DateTime.fromMillisecondsSinceEpoch(0)
+          : DateTime.fromMillisecondsSinceEpoch(
+              doc[LIKES_LAST_VIEWED].millisecondsSinceEpoch),
       lastViewed: doc[LAST_VIEWED] == null
           ? DateTime.fromMillisecondsSinceEpoch(0)
           : DateTime.fromMillisecondsSinceEpoch(doc[LAST_VIEWED].millisecondsSinceEpoch),

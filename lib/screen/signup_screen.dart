@@ -15,6 +15,7 @@ class SignUpScreen extends StatefulWidget {
 class _SignUpState extends State<SignUpScreen> {
   _Controller con;
   GlobalKey<FormState> formKey = GlobalKey<FormState>();
+  Profile profile = new Profile();
 
   @override
   void initState() {
@@ -43,6 +44,14 @@ class _SignUpState extends State<SignUpScreen> {
             child: Column(
               children: [
                 Text("Create an account", style: Theme.of(context).textTheme.headline5),
+                TextFormField(
+                  decoration: InputDecoration(
+                    hintText: 'Username',
+                  ),
+                  autocorrect: false,
+                  validator: con.validateUsername,
+                  onSaved: con.saveUsername,
+                ),
                 TextFormField(
                   decoration: InputDecoration(
                     hintText: 'Email',
@@ -107,27 +116,50 @@ class _Controller {
 
   void createAccount() async {
     if (!state.formKey.currentState.validate()) return;
-
-    state.render(() => passwordErrorMessage = null);
-    state.formKey.currentState.save();
-
     if (password != passwordConfirm) {
       state.render(() => passwordErrorMessage = "Password do not match");
       return;
     }
+    state.render(() => passwordErrorMessage = null);
+    state.profile.age = "";
+    state.profile.name = "";
+    state.profile.docId = "";
+    state.profile.profileFilename = "";
+    state.profile.age = "";
+    state.profile.url = "";
+
+    state.formKey.currentState.save();
+
+    MyDialog.circularProgressStart(state.context);
 
     try {
       await FirebaseController.createAccount(email: email, password: password);
-
-      MyDialog.info(
-        context: state.context,
-        title: "Account created!",
-        content: "Go to Sign In to use the app",
-      );
     } catch (e) {
       MyDialog.info(
         context: state.context,
         title: "Cannot create",
+        content: '$e',
+      );
+      return;
+    }
+    try {
+      var docId = await FirebaseController.addNewProfile(state.profile);
+      state.profile.docId = docId;
+      Map<String, dynamic> updateProfileDocId = {};
+      updateProfileDocId[Profile.DOC_ID] = docId;
+      await FirebaseController.updateProfile(docId, updateProfileDocId);
+      MyDialog.circularProgressStop(state.context);
+      Navigator.pop(state.context);
+      MyDialog.info(
+        context: state.context,
+        title: "Account created!",
+        content: "Please Sign In to use the app",
+      );
+    } catch (e) {
+      MyDialog.circularProgressStop(state.context);
+      MyDialog.info(
+        context: state.context,
+        title: "Cannot create Profile",
         content: '$e',
       );
     }
@@ -140,8 +172,20 @@ class _Controller {
       return 'invalid email';
   }
 
+  String validateUsername(String value) {
+    if (value.length > 3)
+      return null;
+    else
+      return "Username length minimum is 4";
+  }
+
+  void saveUsername(String value) {
+    state.profile.displayName = value;
+  }
+
   void saveEmail(String value) {
     email = value;
+    state.profile.email = value;
   }
 
   String validatePassword(String value) {

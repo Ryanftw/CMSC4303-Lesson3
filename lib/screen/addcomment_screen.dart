@@ -118,16 +118,19 @@ class _Controller {
     state.formKey.currentState.save();
 
     MyDialog.circularProgressStart(state.context);
-
+    tempComment.userProfilePic = state.user.photoURL;
     tempComment.commentBy = state.user.email;
     tempComment.commentDocId = state.onePhotoMemo.photoURL;
     tempComment.timestamp = DateTime.now();
-
     MyDialog.circularProgressStart(state.context);
 
     try {
-      String commentId = await FirebaseController.addComment(tempComment);
-      tempComment.photoCommentId = commentId;
+      // String commentId =
+      var docId = await FirebaseController.addComment(tempComment);
+      Map<String, dynamic> update = {};
+      update[Comment.DOC_ID] = docId;
+      await FirebaseController.updateComment(docId, update);
+      // tempComment.photoCommentId = commentId;
       // state.comments.insert(0, tempComment);
       MyDialog.circularProgressStop(state.context);
       Navigator.pop(state.context); // return to user shared with screen
@@ -139,17 +142,5 @@ class _Controller {
         content: '$e',
       );
     }
-
-    //Make a new comment by this user
-    //Save the DocId of the onePhotoMemoTemp into the CommentDocId
-    //Comment = value; comment UID = state.uid; datetime = now();
-    //figure it out. this should work.
-
-    // NEGATORY GOOD SIR
-    // state.onePhotoMemoTemp.comments.add(
-    //   user: state.user,
-    //   comment: value,
-    //   commentDateTime: DateTime.now(),
-    // );
   }
 }

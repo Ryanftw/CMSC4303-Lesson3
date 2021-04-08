@@ -1,9 +1,12 @@
 import 'package:Assignment3/controller/firebasecontroller.dart';
 import 'package:Assignment3/model/comment.dart';
 import 'package:Assignment3/model/constant.dart';
+import 'package:Assignment3/model/likes.dart';
 import 'package:Assignment3/model/photomemo.dart';
+import 'package:Assignment3/model/profile.dart';
 import 'package:Assignment3/screen/addphotomemo_screen.dart';
 import 'package:Assignment3/screen/profilesettings_screen.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
@@ -22,10 +25,9 @@ class UserHomeScreen extends StatefulWidget {
 
 class _UserHomeState extends State<UserHomeScreen> {
   _Controller con;
-  String profileURL;
   User user;
   List<PhotoMemo> photoMemoList;
-  // List<Comment> commentList;
+  Profile profile;
   GlobalKey<FormState> formKey = GlobalKey<FormState>();
 
   @override
@@ -40,15 +42,13 @@ class _UserHomeState extends State<UserHomeScreen> {
   Widget build(BuildContext context) {
     Map args = ModalRoute.of(context).settings.arguments;
     user ??= args[Constant.ARG_USER];
-    // commentList ??= args[Constant.ARG_COMMENTS];
+    profile ??= args[Constant.ARG_ONE_PROFILE];
     photoMemoList ??= args[Constant.ARG_PHOTOMEMOLIST];
-    // profileURL = user.photoURL;
 
     return WillPopScope(
       onWillPop: () => Future.value(false), // Android back button disabled
       child: Scaffold(
         appBar: AppBar(
-          // title: Text("User Home"),
           actions: [
             con.delIndex != null
                 ? IconButton(icon: Icon(Icons.cancel), onPressed: con.cancelDelete)
@@ -79,18 +79,23 @@ class _UserHomeState extends State<UserHomeScreen> {
           child: ListView(
             children: [
               UserAccountsDrawerHeader(
-                currentAccountPicture: user.photoURL == null
+                currentAccountPicture: profile.url == null
                     ? Icon(
                         Icons.person,
                         size: 100.0,
                       )
-                    : MyImage.network(
-                        url: user.photoURL,
-                        context: context,
-                      ),
-                accountName: user.displayName == null
+                    : profile.url == ""
+                        ? Icon(
+                            Icons.person,
+                            size: 100.0,
+                          )
+                        : MyImage.network(
+                            url: profile.url,
+                            context: context,
+                          ),
+                accountName: profile.displayName == null
                     ? Text("Not set")
-                    : Text("${user.displayName}"),
+                    : Text("${profile.displayName}"),
                 accountEmail: Text(user.email),
               ),
               ListTile(
@@ -120,38 +125,64 @@ class _UserHomeState extends State<UserHomeScreen> {
                 "No PhotoMemos Found!",
                 style: Theme.of(context).textTheme.headline5,
               )
-            : GridView.builder(
-                gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                    crossAxisCount: 2,
-                    mainAxisSpacing: 2,
-                    crossAxisSpacing: 1,
-                    childAspectRatio: 1.25),
+            : ListView.builder(
                 itemCount: photoMemoList.length,
-                itemBuilder: (context, index) => Stack(
+                itemBuilder: (BuildContext context, int index) => Stack(
                   children: [
-                    Expanded(
-                      flex: 1,
-                      child: Container(
-                        height: MediaQuery.of(context).size.height * 1,
-                        width: MediaQuery.of(context).size.width * 1,
-                        child: RaisedButton.icon(
-                          color: Colors.grey[800],
-                          // alignment: Alignment.center,
-                          icon: MyImage.network(
-                            url: photoMemoList[index].photoURL,
-                            context: context,
-                          ),
-                          label: Text(
-                            "",
-                          ),
-                          onLongPress: () => con.onLongPress(index),
-                          onPressed: () => con.onTap(index),
+                    Container(
+                      color: con.delIndex != null && con.delIndex == index
+                          ? Theme.of(context).highlightColor
+                          : Theme.of(context).scaffoldBackgroundColor,
+                      child: ListTile(
+                        leading: MyImage.network(
+                          url: photoMemoList[index].photoURL,
+                          context: context,
+                        ), // leading parameter of listTile
+                        trailing: Icon(Icons.keyboard_arrow_right),
+                        title: Text(photoMemoList[index].title),
+                        subtitle: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(photoMemoList[index].memo.length >= 20
+                                ? photoMemoList[index].memo.substring(0, 20) + '...'
+                                : photoMemoList[index].memo),
+                            Text('Created By: ${photoMemoList[index].createdBy}'),
+                            Text('Shared with: ${photoMemoList[index].sharedWith}'),
+                            Text('Updated At: ${photoMemoList[index].timestamp}'),
+                          ],
                         ),
+                        onTap: () => con.onTap(index),
+                        onLongPress: () => con.onLongPress(index),
                       ),
                     ),
+
+                    // : GridView.builder(
+                    //     gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                    //         crossAxisCount: 2,
+                    //         mainAxisSpacing: 2,
+                    //         crossAxisSpacing: 1,
+                    //         childAspectRatio: 1),
+                    //     itemCount: photoMemoList.length,
+                    //     itemBuilder: (context, index) => Stack(
+                    //       children: [
+                    //         Expanded(
+                    //           flex: 1,
+                    //           child: GestureDetector(
+                    //             child: Center(
+                    //               child: Container(
+                    //                 child: MyImage.network(
+                    //                   url: photoMemoList[index].photoURL,
+                    //                   context: context,
+                    //                 ),
+                    //               ),
+                    //             ),
+                    //             onTap: () => con.onTap(index),
+                    //             onLongPress: () => con.onLongPress(index),
+                    //           ),
+                    //         ),
                     photoMemoList[index].notification == true
                         ? Positioned(
-                            top: 1.0,
+                            top: 40.0,
                             right: 1.0,
                             child: IconButton(
                               icon: Icon(
@@ -159,7 +190,7 @@ class _UserHomeState extends State<UserHomeScreen> {
                                 color: Colors.yellow,
                               ),
                               onPressed: null,
-                              iconSize: 18,
+                              iconSize: 30,
                             ),
                           )
                         : Positioned(
@@ -169,6 +200,46 @@ class _UserHomeState extends State<UserHomeScreen> {
                               height: 1.0,
                             )),
                           ),
+                    photoMemoList[index].likeNotification == true
+                        ? Positioned(
+                            top: 65.0,
+                            right: 1.0,
+                            child: IconButton(
+                              icon: Icon(
+                                Icons.thumb_up,
+                                color: Colors.blue,
+                              ),
+                              onPressed: null,
+                              iconSize: 30,
+                            ),
+                          )
+                        : Positioned(
+                            top: 65.0,
+                            right: 1.0,
+                            child: IconButton(
+                              icon: Icon(
+                                Icons.thumb_up_outlined,
+                                color: Colors.blue,
+                              ),
+                              onPressed: null,
+                              iconSize: 30,
+                            ),
+                          ),
+                    photoMemoList[index].likedBy.isEmpty
+                        ? Positioned(
+                            bottom: 10.0,
+                            right: 10.0,
+                            child: (SizedBox(
+                              height: 1.0,
+                            )),
+                          )
+                        : Positioned(
+                            top: 87.0,
+                            right: 19.0,
+                            child: Text(
+                              "${photoMemoList[index].likedBy.length}",
+                              style: TextStyle(color: Colors.red, fontSize: 10),
+                            ))
                   ],
                 ),
               ),
@@ -209,12 +280,16 @@ class _Controller {
 
   void onTap(int index) async {
     if (delIndex != null) return;
+    List<Comment> cList = await FirebaseController.getCommentList(
+        docId: state.photoMemoList[index].photoURL);
     await Navigator.pushNamed(
       state.context,
       DetailedViewScreen.routeName,
       arguments: {
         Constant.ARG_USER: state.user,
         Constant.ARG_ONE_PHOTOMEMO: state.photoMemoList[index],
+        // Constant.ARG_LIKES: state.userLikes,
+        Constant.ARG_COMMENTS: cList,
       },
     );
     state.render(() {});
@@ -225,11 +300,14 @@ class _Controller {
       List<PhotoMemo> photoMemoList = await FirebaseController.getPhotoMemoSharedWithMe(
         email: state.user.email,
       );
+      List<Likes> userLikes =
+          await FirebaseController.getUserSharedLikes(email: state.user.email);
       await Navigator.pushNamed(state.context, SharedWithScreen.routeName, arguments: {
         Constant.ARG_USER: state.user,
         Constant.ARG_PHOTOMEMOLIST: photoMemoList,
+        Constant.ARG_LIKES: userLikes,
       });
-      Navigator.pop(state.context); //closes the draw
+      Navigator.pop(state.context); //closes the drawer
     } catch (e) {
       MyDialog.info(
         context: state.context,
@@ -248,16 +326,21 @@ class _Controller {
     state.render(() => delIndex = null);
   }
 
-  void settings() {
-    Navigator.pushNamed(state.context, ProfileSettingsScreen.routeName, arguments: {
+  void settings() async {
+    await Navigator.pushNamed(state.context, ProfileSettingsScreen.routeName, arguments: {
       Constant.ARG_USER: state.user,
+      Constant.ARG_ONE_PROFILE: state.profile,
     });
+    Navigator.pop(state.context);
+    state.render(() {});
   }
 
   void delete() async {
     try {
       PhotoMemo p = state.photoMemoList[delIndex];
+      await FirebaseController.deletePhotoLikes(p.photoURL);
       await FirebaseController.deletePhotoMemo(p);
+      await FirebaseController.deletePhotoMemoComments(docId: p.photoURL);
       state.render(() {
         state.photoMemoList.removeAt(delIndex);
         delIndex = null;

@@ -1,7 +1,9 @@
 import 'package:Assignment3/controller/firebasecontroller.dart';
 import 'package:Assignment3/model/comment.dart';
 import 'package:Assignment3/model/constant.dart';
+import 'package:Assignment3/model/likes.dart';
 import 'package:Assignment3/model/photomemo.dart';
+import 'package:Assignment3/model/profile.dart';
 import 'package:Assignment3/screen/myview/mydialog.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
@@ -162,6 +164,7 @@ class _Controller {
             await FirebaseController.getCommentList(docId: memo.photoURL);
         if (comments.length > 0) commentsList.add(comments);
       }
+
       if (commentsList != null) {
         for (var cList in commentsList) {
           for (var comment in cList) {
@@ -175,10 +178,30 @@ class _Controller {
         }
       }
 
+      Profile profile = new Profile();
+      List<Profile> myProfile = await FirebaseController.getUserProfile(user.email);
+      print('${myProfile.length}');
+      if (myProfile.length > 0) {
+        profile.assign(myProfile.elementAt(0));
+      }
+
+      List<Likes> likes = await FirebaseController.getUserLikes(email: user.email);
+      if (likes.isNotEmpty) {
+        for (var like in likes) {
+          for (var photo in photoMemoList) {
+            if (photo.likesLastViewed != null &&
+                like.likeDocId == photo.photoURL &&
+                like.timestamp.isAfter(photo.likesLastViewed)) {
+              photo.likeNotification = true;
+            }
+          }
+        }
+      }
       MyDialog.circularProgressStop(state.context);
       Navigator.pushNamed(state.context, UserHomeScreen.routeName, arguments: {
         Constant.ARG_USER: user,
         Constant.ARG_PHOTOMEMOLIST: photoMemoList,
+        Constant.ARG_ONE_PROFILE: profile,
       });
     } catch (e) {
       MyDialog.circularProgressStop(state.context);
