@@ -22,6 +22,7 @@ class _AddPhotoMemoState extends State<AddPhotoMemoScreen> {
   GlobalKey<FormState> formKey = GlobalKey<FormState>();
   File photo;
   User user;
+  MLAlgorithm labeler; 
   List<PhotoMemo> photoMemoList;
   String progressMessage;
   @override
@@ -136,6 +137,33 @@ class _AddPhotoMemoState extends State<AddPhotoMemoScreen> {
                 validator: PhotoMemo.validateSharedWith,
                 onSaved: con.saveSharedWith,
               ),
+              Column(children: [
+                RadioListTile(
+                  title: Text(MLAlgorithm.MLLabels.toString().split('.')[1]),
+                  dense: true,
+                  value: MLAlgorithm.MLLabels,
+                  groupValue: labeler,
+                  onChanged: (value) {render(() => labeler = value);} //con.setLabeler(value),
+                ),
+                RadioListTile(
+                  title: Text(MLAlgorithm.MLText.toString().split('.')[1]),
+                  dense: true,
+                  value: MLAlgorithm.MLText,
+                  groupValue: labeler,
+                  onChanged: (value) {render(() => labeler = value);} //con.setLabeler(value),
+                ),
+              // Column(
+              //   children: con.getRadioTiles(labeler),
+            //       RadioListTile(
+            //   title: Text("ML Labeler"),
+            //   dense: true,
+            //   value: MLAlgorithm,
+            //   groupValue: labeler,
+            //   onChanged: (MLAlgorithm MLAlgorithm.MLLabels) { state.render(() labeler = MLAlgorithm.MLLabels );},
+            //   // onChanged: editMode ? (value) {} : null,
+            // ),
+                ],
+              ),
             ],
           ),
         ),
@@ -152,6 +180,8 @@ class _Controller {
   void save() async {
     if (!state.formKey.currentState.validate()) return;
     state.formKey.currentState.save();
+
+    if(state.labeler == null) return MyDialog.info(context: state.context, title: "No Labeler Chosen", content: "You must select an image Labeler!!");
 
     MyDialog.circularProgressStart(state.context);
 
@@ -172,14 +202,22 @@ class _Controller {
       );
 
       // image labels by Machine learning
-      state.render(() => state.progressMessage = 'ML Image Labeler Started!');
-      List<dynamic> imageLabels =
+      List<dynamic> imageLabels;
+      if(state.labeler == MLAlgorithm.MLLabels) {
+        state.render(() => state.progressMessage = 'ML Image Labeler Started!');
+        imageLabels =
           await FirebaseController.getImageLabels(photoFile: state.photo);
+      } else {
+        state.render(() => state.progressMessage = 'ML Text Labeler Started!');
+        imageLabels =
+          await FirebaseController.recogniseText(state.photo);
+      }
       state.render(() => state.progressMessage = null);
 
       tempMemo.photoFilename = photoInfo[Constant.ARG_FILENAME];
       tempMemo.photoURL = photoInfo[Constant.ARG_DOWNLOADURL];
       tempMemo.timestamp = DateTime.now();
+      tempMemo.labeler = state.labeler.toString(); 
       tempMemo.createdBy = state.user.email;
       tempMemo.imageLabels = imageLabels;
       tempMemo.numOfComments = 0;
@@ -219,6 +257,12 @@ class _Controller {
       );
     }
   }
+
+  // List<Widget> getRadioTiles(MLAlgorithm nonce) {
+  //   return MLAlgorithm.values.map((ml) => RadioListTile(title: Text(ml.toString().split('.')[1]), dense: true, value: ml, groupValue: state.labeler, onChanged: (MLAlgorithm value) {
+  //     state.render(() => state.labeler = value);
+  //   } )).toList();
+  // }
 
   void saveTitle(String value) {
     tempMemo.title = value;

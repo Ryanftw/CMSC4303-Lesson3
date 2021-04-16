@@ -146,7 +146,7 @@ class _ProfileSettingsState extends State<ProfileSettingsScreen> {
                 decoration: InputDecoration(
                   hintText: "Age",
                 ),
-                initialValue: profile == null ? "-1" : "${profile.age}",
+                initialValue: profile.age == null ? "-1" : "${profile.age}",
                 // autocorrect: true,
                 // keyboardType: TextInputType.values,
                 maxLines: 1,
@@ -160,7 +160,7 @@ class _ProfileSettingsState extends State<ProfileSettingsScreen> {
                   hintText: "Display Name",
                 ),
                 initialValue:
-                    profile == null ? "${user.email}" : "${profile.displayName}",
+                    profile.displayName == null ? "${user.email}" : "${profile.displayName}",
                 autocorrect: false,
                 keyboardType: TextInputType.multiline,
                 maxLines: 2,

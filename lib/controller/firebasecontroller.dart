@@ -109,19 +109,6 @@ class FirebaseController {
     return result;
   }
 
-  // static Future<List<Likes>> getUserMemoLikes({@required String docId}) async {
-  //   QuerySnapshot querySnapshot = await FirebaseFirestore.instance
-  //       .collection(Constant.LIKES_COLLECTION)
-  //       .where(Likes.LIKE_ON, isEqualTo: docId)
-  //       .orderBy(Likes.TIMESTAMP, descending: true)
-  //       .get();
-  //   var result = <Likes>[];
-  //   querySnapshot.docs.forEach((doc) {
-  //     result.add(Likes.deserialize(doc.data(), doc.id));
-  //   });
-  //   return result;
-  // }
-
   static Future<List<Likes>> getUserLikes({@required String email}) async {
     QuerySnapshot querySnapshot = await FirebaseFirestore.instance
         .collection(Constant.LIKES_COLLECTION)
@@ -158,6 +145,31 @@ class FirebaseController {
       result.add(Likes.deserialize(doc.data(), doc.id));
     });
     return result;
+  }
+
+  static Future<List<dynamic>> recogniseText(File imageFile) async {
+    final visionImage = FirebaseVisionImage.fromFile(imageFile);
+    final textRecognizer = FirebaseVision.instance.textRecognizer();
+    final visionText = await textRecognizer.processImage(visionImage);
+    await textRecognizer.close();
+    List<dynamic> labels = <dynamic>[]; 
+    labels = extractText(visionText);
+    if(labels.isEmpty) {labels.addAll("No text found in the image".split(' '));}
+    return labels;
+    
+  }
+
+  static extractText(VisionText visionText) {
+    List<dynamic> text = new List<dynamic>(); 
+    for (TextBlock block in visionText.blocks) {
+      for (TextLine line in block.lines) {
+        for (TextElement word in line.elements) {
+          text.add(word.text.toLowerCase()); 
+        }
+        text.add("\n");
+      }
+    }
+    return text; 
   }
 
   static Future<List<dynamic>> getImageLabels({@required File photoFile}) async {
@@ -250,12 +262,12 @@ class FirebaseController {
         .delete();
   }
 
-  static Future<void> deletePhotoLike(String docId) async {
-    await FirebaseFirestore.instance
-        .collection(Constant.LIKES_COLLECTION)
-        .doc(docId)
-        .delete();
-  }
+  // static Future<void> deletePhotoLike(String docId) async {
+  //   await FirebaseFirestore.instance
+  //       .collection(Constant.LIKES_COLLECTION)
+  //       .doc(docId)
+  //       .delete();
+  // }
 
   static Future<void> deletePhotoLikes(String docId) async {
     QuerySnapshot querySnapshot = await FirebaseFirestore.instance
@@ -295,14 +307,6 @@ class FirebaseController {
         .collection(Constant.COMMENT_COLLECTION)
         .doc(docId)
         .delete();
-    //     .get();
-    // querySnapshot.docs.forEach((doc) async {
-    //   print('${doc.id}');
-    //   await FirebaseFirestore.instance
-    //       .collection(Constant.COMMENT_COLLECTION)
-    //       .doc(doc.id)
-    //       .delete();
-    // });
   }
 
   static Future<List<PhotoMemo>> searchImage({
@@ -319,5 +323,13 @@ class FirebaseController {
     querySnapshot.docs
         .forEach((doc) => results.add(PhotoMemo.deserialize(doc.data(), doc.id)));
     return results;
+  }
+
+  static Future<List<Profile>> searchProfile(List<String>searchLabels) async {
+    QuerySnapshot querySnapshot = await FirebaseFirestore.instance.collection(Constant.PROFILE_COLLECTION).where(Profile.DISPLAY_NAME, whereIn: searchLabels).get();
+    var results = <Profile>[]; 
+    querySnapshot.docs
+        .forEach((doc) => results.add(Profile.deserialize(doc.data(), doc.id)));
+    return results; 
   }
 }

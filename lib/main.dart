@@ -1,5 +1,6 @@
 import 'package:Assignment3/screen/addphotomemo_screen.dart';
 import 'package:Assignment3/screen/detailedview_screen.dart';
+import 'package:Assignment3/screen/friendsearch_screen.dart';
 import 'package:Assignment3/screen/userhome_screen.dart';
 import 'package:Assignment3/screen/viewlikes_screen.dart';
 import 'package:firebase_core/firebase_core.dart';
@@ -40,6 +41,7 @@ class PhotoMemoApp extends StatelessWidget {
           ViewCommentsScreen.routeName: (context) => ViewCommentsScreen(),
           ProfileSettingsScreen.routeName: (context) => ProfileSettingsScreen(),
           ViewLikesScreen.routeName: (context) => ViewLikesScreen(),
+          FriendSearchScreen.routeName: (context) => FriendSearchScreen(),
         });
   }
 }

@@ -11,6 +11,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
 import 'detailedview_screen.dart';
+import 'friendsearch_screen.dart';
 import 'myview/mydialog.dart';
 import 'myview/myimage.dart';
 import 'sharedwith_screen.dart';
@@ -125,124 +126,170 @@ class _UserHomeState extends State<UserHomeScreen> {
                 "No PhotoMemos Found!",
                 style: Theme.of(context).textTheme.headline5,
               )
-            : ListView.builder(
-                itemCount: photoMemoList.length,
-                itemBuilder: (BuildContext context, int index) => Stack(
-                  children: [
-                    Container(
-                      color: con.delIndex != null && con.delIndex == index
-                          ? Theme.of(context).highlightColor
-                          : Theme.of(context).scaffoldBackgroundColor,
-                      child: ListTile(
-                        leading: MyImage.network(
-                          url: photoMemoList[index].photoURL,
-                          context: context,
-                        ), // leading parameter of listTile
-                        trailing: Icon(Icons.keyboard_arrow_right),
-                        title: Text(photoMemoList[index].title),
-                        subtitle: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(photoMemoList[index].memo.length >= 20
-                                ? photoMemoList[index].memo.substring(0, 20) + '...'
-                                : photoMemoList[index].memo),
-                            Text('Created By: ${photoMemoList[index].createdBy}'),
-                            Text('Shared with: ${photoMemoList[index].sharedWith}'),
-                            Text('Updated At: ${photoMemoList[index].timestamp}'),
-                          ],
+            : Stack(
+                children: [
+                  Positioned(
+                    top: 40.0,
+                    right: 325.0,
+                    child: IconButton(icon: Icon(Icons.people, size: 30.0,), onPressed: con.searchFriends,),
+                  ),
+                  Positioned(
+                    top: 85.0,
+                    right: 305.0,
+                    child: Text("Click me to\nfind friends!"),
+                  ),
+                  Positioned(
+                    top: 40.0,
+                    right: 20.0,
+                    child: Text(profile.displayName, style: TextStyle(color: Colors.blue[300]),),
+                  ),
+                  Positioned(
+                    top: 65.0,
+                    right: 20.0,
+                    child: Text("Age ${profile.age}", style: TextStyle(color: Colors.blue[300]),),
+                  ),
+                  Positioned(
+                    top: 90.0,
+                    right: 20.0,
+                    child: Text(profile.email, style: TextStyle(color: Colors.blue[300]),),
+                  ),
+                  Column(
+                    children: [
+                      Expanded(
+                        flex: 3,
+                         child: Center(
+                          child: profile.url != null ?
+                          Container(
+                            height: MediaQuery.of(context).size.height * 0.4,
+                            width: MediaQuery.of(context).size.width * 0.4,
+                            decoration: BoxDecoration(shape: BoxShape.circle, image: DecorationImage(fit:BoxFit.scaleDown, image: NetworkImage(profile.url))),
+                          ) : Icon(Icons.person, size: 300,),
                         ),
-                        onTap: () => con.onTap(index),
-                        onLongPress: () => con.onLongPress(index),
-                      ),
                     ),
+                    Divider(height: 1.0, color: Colors.blue[300], indent: 40.0, endIndent: 40.0, thickness: 0.3,),
+                Expanded(
+                  flex: 4,
+                                child: ListView.builder(
+                    itemCount: photoMemoList.length,
+                    itemBuilder: (BuildContext context, int index) => Stack(
+                      children: [
+                        Container(
+                          color: con.delIndex != null && con.delIndex == index
+                              ? Theme.of(context).highlightColor
+                              : Theme.of(context).scaffoldBackgroundColor,
+                          child: ListTile(
+                            leading: MyImage.network(
+                              url: photoMemoList[index].photoURL,
+                              context: context,
+                            ), // leading parameter of listTile
+                            trailing: Icon(Icons.keyboard_arrow_right),
+                            title: Text(photoMemoList[index].title),
+                            subtitle: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(photoMemoList[index].memo.length >= 20
+                                    ? photoMemoList[index].memo.substring(0, 20) + '...'
+                                    : photoMemoList[index].memo),
+                                Text('Created By: ${photoMemoList[index].createdBy}'),
+                                Text('Shared with: ${photoMemoList[index].sharedWith}'),
+                                Text('Updated At: ${photoMemoList[index].timestamp}'),
+                              ],
+                            ),
+                            onTap: () => con.onTap(index),
+                            onLongPress: () => con.onLongPress(index),
+                          ),
+                        ),
 
-                    // : GridView.builder(
-                    //     gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                    //         crossAxisCount: 2,
-                    //         mainAxisSpacing: 2,
-                    //         crossAxisSpacing: 1,
-                    //         childAspectRatio: 1),
-                    //     itemCount: photoMemoList.length,
-                    //     itemBuilder: (context, index) => Stack(
-                    //       children: [
-                    //         Expanded(
-                    //           flex: 1,
-                    //           child: GestureDetector(
-                    //             child: Center(
-                    //               child: Container(
-                    //                 child: MyImage.network(
-                    //                   url: photoMemoList[index].photoURL,
-                    //                   context: context,
-                    //                 ),
-                    //               ),
-                    //             ),
-                    //             onTap: () => con.onTap(index),
-                    //             onLongPress: () => con.onLongPress(index),
-                    //           ),
-                    //         ),
-                    photoMemoList[index].notification == true
-                        ? Positioned(
-                            top: 40.0,
-                            right: 1.0,
-                            child: IconButton(
-                              icon: Icon(
-                                Icons.chat,
-                                color: Colors.yellow,
+                        // : GridView.builder(
+                        //     gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                        //         crossAxisCount: 2,
+                        //         mainAxisSpacing: 2,
+                        //         crossAxisSpacing: 1,
+                        //         childAspectRatio: 1),
+                        //     itemCount: photoMemoList.length,
+                        //     itemBuilder: (context, index) => Stack(
+                        //       children: [
+                        //         Expanded(
+                        //           flex: 1,
+                        //           child: GestureDetector(
+                        //             child: Center(
+                        //               child: Container(
+                        //                 child: MyImage.network(
+                        //                   url: photoMemoList[index].photoURL,
+                        //                   context: context,
+                        //                 ),
+                        //               ),
+                        //             ),
+                        //             onTap: () => con.onTap(index),
+                        //             onLongPress: () => con.onLongPress(index),
+                        //           ),
+                        //         ),
+                        photoMemoList[index].notification == true
+                            ? Positioned(
+                                top: 30.0,
+                                right: 1.0,
+                                child: IconButton(
+                                  icon: Icon(
+                                    Icons.chat,
+                                    color: Colors.yellow,
+                                  ),
+                                  onPressed: null,
+                                  iconSize: 30,
+                                ),
+                              )
+                            : Positioned(
+                                bottom: 10.0,
+                                right: 10.0,
+                                child: (SizedBox(
+                                  height: 1.0,
+                                )),
                               ),
-                              onPressed: null,
-                              iconSize: 30,
-                            ),
-                          )
-                        : Positioned(
-                            bottom: 10.0,
-                            right: 10.0,
-                            child: (SizedBox(
-                              height: 1.0,
-                            )),
-                          ),
-                    photoMemoList[index].likeNotification == true
-                        ? Positioned(
-                            top: 65.0,
-                            right: 1.0,
-                            child: IconButton(
-                              icon: Icon(
-                                Icons.thumb_up,
-                                color: Colors.blue,
+                        photoMemoList[index].likeNotification == true
+                            ? Positioned(
+                                top: 55.0,
+                                right: 1.0,
+                                child: IconButton(
+                                  icon: Icon(
+                                    Icons.thumb_up,
+                                    color: Colors.blue,
+                                  ),
+                                  onPressed: null,
+                                  iconSize: 30,
+                                ),
+                              )
+                            : Positioned(
+                                top: 55.0,
+                                right: 1.0,
+                                child: IconButton(
+                                  icon: Icon(
+                                    Icons.thumb_up_outlined,
+                                    color: Colors.blue,
+                                  ),
+                                  onPressed: null,
+                                  iconSize: 30,
+                                ),
                               ),
-                              onPressed: null,
-                              iconSize: 30,
-                            ),
-                          )
-                        : Positioned(
-                            top: 65.0,
-                            right: 1.0,
-                            child: IconButton(
-                              icon: Icon(
-                                Icons.thumb_up_outlined,
-                                color: Colors.blue,
-                              ),
-                              onPressed: null,
-                              iconSize: 30,
-                            ),
-                          ),
-                    photoMemoList[index].likedBy.isEmpty
-                        ? Positioned(
-                            bottom: 10.0,
-                            right: 10.0,
-                            child: (SizedBox(
-                              height: 1.0,
-                            )),
-                          )
-                        : Positioned(
-                            top: 87.0,
-                            right: 19.0,
-                            child: Text(
-                              "${photoMemoList[index].likedBy.length}",
-                              style: TextStyle(color: Colors.red, fontSize: 10),
-                            ))
-                  ],
+                        photoMemoList[index].likedBy.isEmpty
+                            ? Positioned(
+                                bottom: 10.0,
+                                right: 10.0,
+                                child: (SizedBox(
+                                  height: 1.0,
+                                )),
+                              )
+                            : Positioned(
+                                top: 87.0,
+                                right: 19.0,
+                                child: Text(
+                                  "${photoMemoList[index].likedBy.length}",
+                                  style: TextStyle(color: Colors.red, fontSize: 10),
+                                ))
+                      ],
+                    ),
+                  ),
                 ),
-              ),
+                ],),
+                          ],),
       ),
     );
   }
@@ -376,5 +423,9 @@ class _Controller {
     } catch (e) {
       MyDialog.info(context: state.context, title: "Search error", content: "$e");
     }
+  }
+
+  void searchFriends() {
+    Navigator.pushNamed(state.context, FriendSearchScreen.routeName);
   }
 }

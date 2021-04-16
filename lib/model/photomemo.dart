@@ -1,4 +1,11 @@
-class PhotoMemo {
+import 'dart:io';
+
+enum MLAlgorithm {
+  MLLabels,
+  MLText,
+}
+
+class PhotoMemo {  
   String docID; //Firestore auto generated id
   String createdBy;
   String memo; // actual contents of the memo
@@ -12,6 +19,7 @@ class PhotoMemo {
   DateTime lastViewed;
   DateTime likesLastViewed;
   DateTime timestamp;
+  String labeler; 
 
   List<dynamic> likedBy;
 
@@ -23,6 +31,7 @@ class PhotoMemo {
   // key for firestore document
   static const TITLE = 'title';
   static const MEMO = 'memo';
+  static const LABELER = 'labeler';
   static const CREATED_BY = 'createdBy';
   static const PHOTO_URL = 'photoURL';
   static const PHOTO_FILENAME = 'photoFilename';
@@ -42,6 +51,7 @@ class PhotoMemo {
     this.docID,
     this.likesLastViewed,
     this.likes,
+    this.labeler,
     this.createdBy,
     this.likeNotification,
     this.memo,
@@ -62,6 +72,7 @@ class PhotoMemo {
 
   PhotoMemo.clone(PhotoMemo p) {
     this.numOfComments = p.numOfComments;
+    this.labeler = p.labeler;
     this.docID = p.docID;
     this.createdBy = p.createdBy;
     this.likesLastViewed = p.likesLastViewed;
@@ -85,6 +96,7 @@ class PhotoMemo {
   void assign(PhotoMemo p) {
     this.numOfComments = p.numOfComments;
     this.docID = p.docID;
+    this.labeler = p.labeler;
     this.likesLastViewed = p.likesLastViewed;
     this.createdBy = p.createdBy;
     this.likeNotification = p.likeNotification;
@@ -113,6 +125,7 @@ class PhotoMemo {
     return <String, dynamic>{
       LIKED_BY: this.likedBy,
       LIKES: this.likes,
+      LABELER: this.labeler, 
       LIKES_LAST_VIEWED: this.likesLastViewed,
       LIKE_NOTIFICATION: this.likeNotification,
       COMMENTS: this.numOfComments,
@@ -132,6 +145,7 @@ class PhotoMemo {
   static PhotoMemo deserialize(Map<String, dynamic> doc, String docId) {
     return PhotoMemo(
       docID: docId,
+      labeler: doc[LABELER],
       likedBy: doc[LIKED_BY],
       likeNotification: doc[LIKE_NOTIFICATION],
       // likesLastViewed: doc[LIKES_LAST_VIEWED],
