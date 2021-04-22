@@ -4,7 +4,7 @@ class Constant {
   static const ARG_USER = 'user';
   static const ARG_PHOTOMEMOLIST = 'photomemo_list';
   static const ARG_COMMENTS = 'comment_list';
-  // static const ARG_PROFILES = 'profileList';
+  static const ARG_FOLLOWING = 'followingList';
   static const ARG_ONE_PHOTOMEMO = 'one_photomemo';
   static const ARG_ONE_PROFILE = 'one_profile';
   static const ARG_LIKES = 'likes';

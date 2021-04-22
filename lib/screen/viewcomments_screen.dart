@@ -1,10 +1,11 @@
+import 'package:Assignment3/controller/firebasecontroller.dart';
 import 'package:Assignment3/model/comment.dart';
 import 'package:Assignment3/model/constant.dart';
 import 'package:Assignment3/model/photomemo.dart';
+import 'package:Assignment3/screen/myview/mydialog.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
-import 'addcomment_screen.dart';
 import 'myview/myimage.dart';
 
 class ViewCommentsScreen extends StatefulWidget {
@@ -52,7 +53,7 @@ class _ViewCommentsState extends State<ViewCommentsScreen> {
                   flex: 1,
                   child: Center(
                     child: Container(
-                      height: MediaQuery.of(context).size.height * 0.4,
+                      // height: MediaQuery.of(context).size.height * 0.4,
                       child: MyImage.network(
                         url: onePhotoMemoTemp.photoURL,
                         context: context,
@@ -77,8 +78,8 @@ class _ViewCommentsState extends State<ViewCommentsScreen> {
                                 commentList[index].userProfilePic == null
                                     ? SizedBox(height: 1.0)
                                     : Container(
-                                        height: 40,
-                                        width: 40,
+                                        height: 60,
+                                        width: 60,
                                         child: MyImage.network(
                                             url: commentList[index].userProfilePic,
                                             context: context),
@@ -97,10 +98,13 @@ class _ViewCommentsState extends State<ViewCommentsScreen> {
                                   "${commentList[index].timestamp}",
                                   style: null,
                                 ),
-                                SizedBox(
-                                  height: 40,
-                                  width: 15.0,
-                                ),
+                                commentList[index].commentBy == user.email || commentList[index].commentOn == user.email ? 
+                                RaisedButton(onPressed: () => con.deleteComment(index), child: Text("Delete"),)
+                                : SizedBox(height: 1.0),
+                                // SizedBox(
+                                //   height: 40,
+                                //   width: 15.0,
+                                // ),
                                 // commentList[index].userProfilePic == null
                                 //     ? SizedBox(height: 1.0)
                                 //     : Container(
@@ -130,4 +134,14 @@ class _ViewCommentsState extends State<ViewCommentsScreen> {
 class _Controller {
   _ViewCommentsState state;
   _Controller(this.state);
+
+  void deleteComment(int index) async {
+    try {
+      await FirebaseController.deletePhotoComment(docId: state.commentList.elementAt(index).docId);
+      state.commentList.removeAt(index);
+      state.render(() {});
+    } catch (e) {
+      MyDialog.info(context: state.context, title: "Delete Comment Error", content: e.toString());
+    }
+  }
 }

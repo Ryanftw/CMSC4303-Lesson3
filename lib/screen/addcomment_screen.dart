@@ -36,7 +36,6 @@ class _AddCommentState extends State<AddCommentScreen> {
   @override
   Widget build(BuildContext context) {
     Map args = ModalRoute.of(context).settings.arguments;
-    // comments ??= args[Constant.ARG_COMMENTS];
     user ??= args[Constant.ARG_USER];
     onePhotoMemo ??= args[Constant.ARG_ONE_PHOTOMEMO];
     onePhotoMemoTemp ??= PhotoMemo.clone(onePhotoMemo);
@@ -99,7 +98,7 @@ class _AddCommentState extends State<AddCommentScreen> {
 class _Controller {
   _AddCommentState state;
   _Controller(this.state);
-  Comment tempComment = Comment(); // build a new comment and add it somehow
+  Comment tempComment = Comment();
 
   String validateComment(String value) {
     if (value.length > 2) {
@@ -121,20 +120,18 @@ class _Controller {
     tempComment.userProfilePic = state.user.photoURL;
     tempComment.commentBy = state.user.email;
     tempComment.commentDocId = state.onePhotoMemo.photoURL;
+    tempComment.commentOn = state.onePhotoMemo.createdBy;
     tempComment.timestamp = DateTime.now();
     MyDialog.circularProgressStart(state.context);
 
     try {
-      // String commentId =
       var docId = await FirebaseController.addComment(tempComment);
       Map<String, dynamic> update = {};
       update[Comment.DOC_ID] = docId;
       await FirebaseController.updateComment(docId, update);
-      // tempComment.photoCommentId = commentId;
-      // state.comments.insert(0, tempComment);
       MyDialog.circularProgressStop(state.context);
-      Navigator.pop(state.context); // return to user shared with screen
-      Navigator.pop(state.context); // return to user shared with screen
+      Navigator.pop(state.context);
+      Navigator.pop(state.context); // return to shared with screen
     } catch (e) {
       MyDialog.info(
         context: state.context,

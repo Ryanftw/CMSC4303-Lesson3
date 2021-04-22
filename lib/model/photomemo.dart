@@ -1,8 +1,11 @@
-import 'dart:io';
-
 enum MLAlgorithm {
   MLLabels,
   MLText,
+}
+
+enum Privacy {
+  Public, 
+  Private,
 }
 
 class PhotoMemo {  
@@ -12,7 +15,7 @@ class PhotoMemo {
   String title;
   String photoFilename; // stored at Storage in firebase (non text database)
   String photoURL;
-  int numOfComments;
+  bool public; 
   int likes;
   bool notification;
   bool likeNotification;
@@ -31,6 +34,7 @@ class PhotoMemo {
   // key for firestore document
   static const TITLE = 'title';
   static const MEMO = 'memo';
+  static const PUBLIC = 'public'; 
   static const LABELER = 'labeler';
   static const CREATED_BY = 'createdBy';
   static const PHOTO_URL = 'photoURL';
@@ -42,16 +46,15 @@ class PhotoMemo {
   static const LIKED_BY = 'likedBy';
   static const LIKES = 'likes';
   static const IMAGE_LABELS = 'imageLabels';
-  static const COMMENTS = 'numOfComments';
   static const NOTIFICATION = 'notification';
   static const LIKE_NOTIFICATION = 'likeNotification';
 
   PhotoMemo({
-    this.numOfComments,
     this.docID,
     this.likesLastViewed,
     this.likes,
     this.labeler,
+    this.public,
     this.createdBy,
     this.likeNotification,
     this.memo,
@@ -71,10 +74,10 @@ class PhotoMemo {
   }
 
   PhotoMemo.clone(PhotoMemo p) {
-    this.numOfComments = p.numOfComments;
     this.labeler = p.labeler;
     this.docID = p.docID;
     this.createdBy = p.createdBy;
+    this.public = p.public;
     this.likesLastViewed = p.likesLastViewed;
     this.memo = p.memo;
     this.photoFilename = p.photoFilename;
@@ -94,9 +97,9 @@ class PhotoMemo {
   }
 // a = b ===> a.assign(b)
   void assign(PhotoMemo p) {
-    this.numOfComments = p.numOfComments;
     this.docID = p.docID;
     this.labeler = p.labeler;
+    this.public = p.public;
     this.likesLastViewed = p.likesLastViewed;
     this.createdBy = p.createdBy;
     this.likeNotification = p.likeNotification;
@@ -126,9 +129,9 @@ class PhotoMemo {
       LIKED_BY: this.likedBy,
       LIKES: this.likes,
       LABELER: this.labeler, 
+      PUBLIC: this.public,
       LIKES_LAST_VIEWED: this.likesLastViewed,
       LIKE_NOTIFICATION: this.likeNotification,
-      COMMENTS: this.numOfComments,
       TITLE: this.title,
       CREATED_BY: this.createdBy,
       MEMO: this.memo,
@@ -148,9 +151,8 @@ class PhotoMemo {
       labeler: doc[LABELER],
       likedBy: doc[LIKED_BY],
       likeNotification: doc[LIKE_NOTIFICATION],
-      // likesLastViewed: doc[LIKES_LAST_VIEWED],
+      public: doc[PUBLIC],
       likes: doc[LIKES],
-      numOfComments: doc[COMMENTS],
       createdBy: doc[CREATED_BY],
       title: doc[TITLE],
       memo: doc[MEMO],

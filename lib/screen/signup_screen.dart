@@ -116,6 +116,7 @@ class _Controller {
 
   void createAccount() async {
     if (!state.formKey.currentState.validate()) return;
+    state.formKey.currentState.save();
     if (password != passwordConfirm) {
       state.render(() => passwordErrorMessage = "Password do not match");
       return;
@@ -127,8 +128,8 @@ class _Controller {
     state.profile.profileFilename = "";
     state.profile.age = "";
     state.profile.url = "";
+    state.profile.profilePublic = false; 
 
-    state.formKey.currentState.save();
 
     MyDialog.circularProgressStart(state.context);
 

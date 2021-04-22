@@ -2,6 +2,7 @@ import 'package:Assignment3/screen/addphotomemo_screen.dart';
 import 'package:Assignment3/screen/detailedview_screen.dart';
 import 'package:Assignment3/screen/friendsearch_screen.dart';
 import 'package:Assignment3/screen/userhome_screen.dart';
+import 'package:Assignment3/screen/viewfollowedprofile_screen.dart';
 import 'package:Assignment3/screen/viewlikes_screen.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
@@ -13,6 +14,7 @@ import 'screen/sharedwith_screen.dart';
 import 'screen/signin_screen.dart';
 import 'screen/signup_screen.dart';
 import 'screen/viewcomments_screen.dart';
+import 'screen/viewfollowing_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -42,6 +44,8 @@ class PhotoMemoApp extends StatelessWidget {
           ProfileSettingsScreen.routeName: (context) => ProfileSettingsScreen(),
           ViewLikesScreen.routeName: (context) => ViewLikesScreen(),
           FriendSearchScreen.routeName: (context) => FriendSearchScreen(),
+          ViewFollowedProfileScreen.routeName: (context) => ViewFollowedProfileScreen(),
+          ViewFollowingScreen.routeName: (contex) => ViewFollowingScreen(),
         });
   }
 }

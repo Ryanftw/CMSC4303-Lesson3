@@ -60,12 +60,15 @@ class _SharedWithState extends State<SharedWithScreen> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Center(
-                          child: Container(
-                            height: MediaQuery.of(context).size.height * 0.4,
-                            child: MyImage.network(
-                              url: photoMemoList[index].photoURL,
-                              context: context,
+                          child: GestureDetector(
+                            child: Container(
+                              height: MediaQuery.of(context).size.height * 0.4,
+                              child: MyImage.network(
+                                url: photoMemoList[index].photoURL,
+                                context: context,
+                              ),
                             ),
+                            onTap: () => con.thumbsUp(index),
                           ),
                         ),
                         Row(

@@ -20,7 +20,7 @@ class Likes {
     this.likeOn,
     this.timestamp,
     this.docId,
-  }) {}
+  });
 
   Likes.clone(Likes l) {
     this.likedBy = l.likedBy;

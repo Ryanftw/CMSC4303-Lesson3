@@ -241,6 +241,53 @@ class FirebaseController {
     return result;
   }
 
+  static Future<void> setPhotosPrivate(String email, Map<String, dynamic> updateInfo) async {
+    List<PhotoMemo> photoMemoList;
+    photoMemoList = await getPhotoMemoList(email: email); 
+    photoMemoList.forEach((element) async {
+      await FirebaseFirestore.instance.collection(Constant.PHOTOMEMO_COLLECTION).doc(element.docID).update(updateInfo);
+    });
+  }
+
+  static Future<List<Profile>> getPublicProfiles(String email) async {
+    QuerySnapshot querySnapshot = await FirebaseFirestore.instance
+    .collection(Constant.PROFILE_COLLECTION)
+    .where(Profile.PROFILE_PUBLIC, isEqualTo: true)
+    .orderBy(Profile.NAME, descending: false)
+    .get(); 
+    var result = <Profile>[]; 
+    querySnapshot.docs.forEach((doc) {
+      Profile temp = Profile.deserialize(doc.data(), doc.id); 
+      if(temp.email != email)
+        result.add(temp);
+    });
+    return result;
+  }
+
+  static Future<List<PhotoMemo>> getFollowedMemos(String myEmail, String theirEmail) async {
+    QuerySnapshot querySnapshot = await FirebaseFirestore.instance
+    .collection(Constant.PHOTOMEMO_COLLECTION)
+    .where(PhotoMemo.CREATED_BY, isEqualTo: theirEmail)
+    .where(PhotoMemo.PUBLIC, isEqualTo: Constant.DEV)
+    .orderBy(PhotoMemo.TIMESTAMP, descending: true)
+    .get(); 
+    QuerySnapshot querySnapshot2 = await FirebaseFirestore.instance
+      .collection(Constant.PHOTOMEMO_COLLECTION)
+      .where(PhotoMemo.CREATED_BY, isEqualTo: theirEmail)
+      .where(PhotoMemo.PUBLIC, isEqualTo: false)
+      .where(PhotoMemo.SHARED_WITH, arrayContains: myEmail)
+      .orderBy(PhotoMemo.TIMESTAMP, descending: true)
+      .get(); 
+    var result = <PhotoMemo>[]; 
+    querySnapshot.docs.forEach((doc) {
+      result.add(PhotoMemo.deserialize(doc.data(), doc.id));
+    });
+    querySnapshot2.docs.forEach((doc) {
+      result.add(PhotoMemo.deserialize(doc.data(), doc.id));
+    });
+    return result; 
+  }
+
   static Future<void> deleteProfilePicture(String fileName) async {
     await FirebaseStorage.instance.ref().child(fileName).delete();
   }
@@ -262,12 +309,16 @@ class FirebaseController {
         .delete();
   }
 
-  // static Future<void> deletePhotoLike(String docId) async {
-  //   await FirebaseFirestore.instance
-  //       .collection(Constant.LIKES_COLLECTION)
-  //       .doc(docId)
-  //       .delete();
-  // }
+  static Future<void> deleteUserLikes(String email) async {
+    QuerySnapshot querySnapshot = await FirebaseFirestore.instance
+    .collection(Constant.LIKES_COLLECTION)
+    .where(Likes.LIKE_ON, isEqualTo: email)
+    .get();
+  
+    querySnapshot.docs.forEach((doc) async {
+      await FirebaseFirestore.instance.collection(Constant.LIKES_COLLECTION).doc(doc.id).delete(); 
+     });
+  }
 
   static Future<void> deletePhotoLikes(String docId) async {
     QuerySnapshot querySnapshot = await FirebaseFirestore.instance
@@ -293,6 +344,13 @@ class FirebaseController {
           .doc(doc.id)
           .delete();
     });
+  }
+
+  static Future<List<Profile>> getFollowingList(List<dynamic> following) async {
+    QuerySnapshot querySnapshot = await FirebaseFirestore.instance.collection(Constant.PROFILE_COLLECTION).where(Profile.EMAIL, whereIn: following).get(); 
+    var results = <Profile>[]; 
+    querySnapshot.docs.forEach((element) => results.add(Profile.deserialize(element.data(), element.id)));
+    return results; 
   }
 
   static Future<void> updateComment(String docId, Map<String, dynamic> update) async {
@@ -325,11 +383,15 @@ class FirebaseController {
     return results;
   }
 
-  static Future<List<Profile>> searchProfile(List<String>searchLabels) async {
-    QuerySnapshot querySnapshot = await FirebaseFirestore.instance.collection(Constant.PROFILE_COLLECTION).where(Profile.DISPLAY_NAME, whereIn: searchLabels).get();
+  static Future<List<Profile>> searchProfile(String searchLabels) async {
+    QuerySnapshot querySnapshot = await FirebaseFirestore.instance.collection(Constant.PROFILE_COLLECTION).where(Profile.EMAIL, isEqualTo: searchLabels).get();
     var results = <Profile>[]; 
     querySnapshot.docs
         .forEach((doc) => results.add(Profile.deserialize(doc.data(), doc.id)));
     return results; 
+  }
+
+  static Future<void> updateFollowing(String docId, Map<String, dynamic> updateInfo) async {
+    await FirebaseFirestore.instance.collection(Constant.PROFILE_COLLECTION).doc(docId).update(updateInfo); 
   }
 }

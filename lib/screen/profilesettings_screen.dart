@@ -2,7 +2,6 @@ import 'dart:io';
 
 import 'package:Assignment3/controller/firebasecontroller.dart';
 import 'package:Assignment3/model/constant.dart';
-import 'package:Assignment3/model/photomemo.dart';
 import 'package:Assignment3/model/profile.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
@@ -22,6 +21,7 @@ class ProfileSettingsScreen extends StatefulWidget {
 class _ProfileSettingsState extends State<ProfileSettingsScreen> {
   _Controller con;
   User user;
+  bool public = false; 
   Profile profile;
   Profile tempProfile;
   // String photourl;
@@ -170,6 +170,12 @@ class _ProfileSettingsState extends State<ProfileSettingsScreen> {
               SizedBox(
                 height: 5.0,
               ),
+              editMode ?
+              RadioListTile(title : Text("Public"), value: true, groupValue: public, onChanged: (value) {render(() => public = value);}
+              ) : SizedBox(height: 1.0),
+              editMode ?
+              RadioListTile(title : Text("Private"), value: false, groupValue: public, onChanged: (value) {render(() => public = value);}
+              ) : SizedBox(height: 1.0),
             ],
           ),
         ),
@@ -253,6 +259,16 @@ class _Controller {
             });
           },
         );
+        state.tempProfile.profilePublic = state.public; 
+        updateInfo[Profile.PROFILE_PUBLIC] = state.public; 
+        if(!state.public) {
+          Map<String, dynamic> updatePrivacy = {}; 
+          updatePrivacy[Profile.PROFILE_PUBLIC] = state.public; 
+          await FirebaseController.setPhotosPrivate(state.user.email, updatePrivacy); 
+        }
+        if(!state.public) {
+          await FirebaseController.deleteUserLikes(state.user.email); 
+        }
         state.tempProfile.profileFilename = photoInfo[Constant.ARG_FILENAME];
         updateInfo[Profile.PROFILE_FILENAME] = photoInfo[Constant.ARG_FILENAME];
         if (state.profile.profileFilename != "") {
@@ -265,6 +281,7 @@ class _Controller {
         state.user.updateProfile(
             displayName: state.tempProfile.displayName, photoURL: state.tempProfile.url);
         await FirebaseController.updateProfile(state.tempProfile.docId, updateInfo);
+        
         state.profile.assign(state.tempProfile);
         MyDialog.circularProgressStop(state.context);
         Navigator.pop(state.context);
@@ -278,9 +295,20 @@ class _Controller {
       }
     } else {
       try {
+        state.tempProfile.profilePublic = state.public; 
+        updateInfo[Profile.PROFILE_PUBLIC] = state.public; 
+        if(!state.public) {
+          Map<String, dynamic> updatePrivacy = {}; 
+          updatePrivacy[Profile.PROFILE_PUBLIC] = state.public; 
+          await FirebaseController.setPhotosPrivate(state.user.email, updatePrivacy); 
+        }
+        if(!state.public) {
+          await FirebaseController.deleteUserLikes(state.user.email); 
+        }
         state.user.updateProfile(
             displayName: state.tempProfile.displayName, photoURL: state.tempProfile.url);
         await FirebaseController.updateProfile(state.tempProfile.docId, updateInfo);
+
         state.profile.assign(state.tempProfile);
         MyDialog.circularProgressStop(state.context);
         Navigator.pop(state.context);
@@ -307,7 +335,7 @@ class _Controller {
       } else {
         _photoFile = await ImagePicker().getImage(source: ImageSource.gallery);
       }
-      if (_photoFile == null) return; // selection canceled
+      if (_photoFile == null) return;
       state.render(() => photoFile = File(_photoFile.path));
     } catch (e) {
       MyDialog.info(context: state.context, title: 'getPhoto error', content: '$e');

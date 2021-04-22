@@ -6,7 +6,8 @@ import 'package:Assignment3/model/photomemo.dart';
 import 'package:Assignment3/model/profile.dart';
 import 'package:Assignment3/screen/addphotomemo_screen.dart';
 import 'package:Assignment3/screen/profilesettings_screen.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:Assignment3/screen/viewfollowing_screen.dart';
+import 'package:draggable_floating_button/draggable_floating_button.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
@@ -117,39 +118,48 @@ class _UserHomeState extends State<UserHomeScreen> {
             ],
           ),
         ),
-        floatingActionButton: FloatingActionButton(
+        floatingActionButton: DraggableFloatingActionButton(
+          offset: Offset(200, 200),
+          backgroundColor: Colors.blue[300].withOpacity(0.6),
           child: Icon(Icons.add),
           onPressed: con.addButton,
+          appContext: context,
+          data: "DFAB",
         ),
-        body: photoMemoList.length == 0
-            ? Text(
-                "No PhotoMemos Found!",
-                style: Theme.of(context).textTheme.headline5,
-              )
-            : Stack(
+        body: Stack(
                 children: [
                   Positioned(
-                    top: 40.0,
+                    top: 20.0,
                     right: 325.0,
-                    child: IconButton(icon: Icon(Icons.people, size: 30.0,), onPressed: con.searchFriends,),
+                    child: IconButton(icon: Icon(Icons.person_search, size: 30.0,), onPressed: con.searchFriends,),
                   ),
                   Positioned(
-                    top: 85.0,
+                    top: 65.0,
                     right: 305.0,
-                    child: Text("Click me to\nfind friends!"),
+                    child: Text("Search for\nfriends!"),
                   ),
                   Positioned(
-                    top: 40.0,
+                    top: 215.0,
+                    right: 325.0,
+                    child: IconButton(icon: Icon(Icons.people, size: 40.0, color: Colors.blue[300],), onPressed: con.followingPage,),
+                  ),
+                  Positioned(
+                    top: 265.0,
+                    right: 310.0,
+                    child: Text("Following"),
+                  ),
+                  Positioned(
+                    top: 30.0,
                     right: 20.0,
                     child: Text(profile.displayName, style: TextStyle(color: Colors.blue[300]),),
                   ),
                   Positioned(
-                    top: 65.0,
+                    top: 55.0,
                     right: 20.0,
                     child: Text("Age ${profile.age}", style: TextStyle(color: Colors.blue[300]),),
                   ),
                   Positioned(
-                    top: 90.0,
+                    top: 80.0,
                     right: 20.0,
                     child: Text(profile.email, style: TextStyle(color: Colors.blue[300]),),
                   ),
@@ -160,24 +170,36 @@ class _UserHomeState extends State<UserHomeScreen> {
                          child: Center(
                           child: profile.url != null ?
                           Container(
-                            height: MediaQuery.of(context).size.height * 0.4,
-                            width: MediaQuery.of(context).size.width * 0.4,
+                            height: MediaQuery.of(context).size.height * 0.5,
+                            width: MediaQuery.of(context).size.width * 0.5,
                             decoration: BoxDecoration(shape: BoxShape.circle, image: DecorationImage(fit:BoxFit.scaleDown, image: NetworkImage(profile.url))),
-                          ) : Icon(Icons.person, size: 300,),
+                          ) : Container(
+                            height: MediaQuery.of(context).size.height * 0.5,
+                            width: MediaQuery.of(context).size.width * 0.5,
+                            child: Icon(Icons.person, size: 150,),
+                          ),//Icon(Icons.person, size: 300,),
                         ),
                     ),
                     Divider(height: 1.0, color: Colors.blue[300], indent: 40.0, endIndent: 40.0, thickness: 0.3,),
-                Expanded(
-                  flex: 4,
-                                child: ListView.builder(
-                    itemCount: photoMemoList.length,
-                    itemBuilder: (BuildContext context, int index) => Stack(
-                      children: [
-                        Container(
-                          color: con.delIndex != null && con.delIndex == index
+                    photoMemoList.length == 0
+                    ? Expanded(
+                      flex: 4,
+                      child: Text(
+                       "No Photomemos Found!", 
+                       style: Theme.of(context).textTheme.headline5,
+                      ),
+                    )
+                    : Expanded(
+                    flex: 4,
+                    child: ListView.builder(
+                      itemCount: photoMemoList.length,
+                      itemBuilder: (BuildContext context, int index) => Stack(
+                        children: [
+                          Container(
+                            color: con.delIndex != null && con.delIndex == index
                               ? Theme.of(context).highlightColor
                               : Theme.of(context).scaffoldBackgroundColor,
-                          child: ListTile(
+                            child: ListTile(
                             leading: MyImage.network(
                               url: photoMemoList[index].photoURL,
                               context: context,
@@ -197,33 +219,8 @@ class _UserHomeState extends State<UserHomeScreen> {
                             ),
                             onTap: () => con.onTap(index),
                             onLongPress: () => con.onLongPress(index),
+                            ),
                           ),
-                        ),
-
-                        // : GridView.builder(
-                        //     gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                        //         crossAxisCount: 2,
-                        //         mainAxisSpacing: 2,
-                        //         crossAxisSpacing: 1,
-                        //         childAspectRatio: 1),
-                        //     itemCount: photoMemoList.length,
-                        //     itemBuilder: (context, index) => Stack(
-                        //       children: [
-                        //         Expanded(
-                        //           flex: 1,
-                        //           child: GestureDetector(
-                        //             child: Center(
-                        //               child: Container(
-                        //                 child: MyImage.network(
-                        //                   url: photoMemoList[index].photoURL,
-                        //                   context: context,
-                        //                 ),
-                        //               ),
-                        //             ),
-                        //             onTap: () => con.onTap(index),
-                        //             onLongPress: () => con.onLongPress(index),
-                        //           ),
-                        //         ),
                         photoMemoList[index].notification == true
                             ? Positioned(
                                 top: 30.0,
@@ -278,7 +275,7 @@ class _UserHomeState extends State<UserHomeScreen> {
                                 )),
                               )
                             : Positioned(
-                                top: 87.0,
+                                top: 77.0,
                                 right: 19.0,
                                 child: Text(
                                   "${photoMemoList[index].likedBy.length}",
@@ -287,9 +284,18 @@ class _UserHomeState extends State<UserHomeScreen> {
                       ],
                     ),
                   ),
-                ),
+                )
+                // : SizedBox(height: 25.0,),
+                // Expanded(
+                //   flex: 4,
+                //   child: Text(
+                //     "No Photomemos Found!", 
+                //     style: Theme.of(context).textTheme.headline5,
+                //   ),
+                // ),
                 ],),
                           ],),
+                          
       ),
     );
   }
@@ -425,7 +431,21 @@ class _Controller {
     }
   }
 
-  void searchFriends() {
-    Navigator.pushNamed(state.context, FriendSearchScreen.routeName);
+  void followingPage() async {
+    List<Profile> followingList = []; 
+    if(state.profile.following.isNotEmpty)
+    followingList = await FirebaseController.getFollowingList(state.profile.following); 
+    Navigator.pushNamed(state.context, ViewFollowingScreen.routeName, arguments: { 
+      Constant.ARG_ONE_PROFILE: state.profile, Constant.ARG_USER: state.user, Constant.ARG_FOLLOWING: followingList,
+    }); 
+  }
+
+  void searchFriends() async {
+    List<Profile> publicProfiles;
+    publicProfiles = await FirebaseController.getPublicProfiles(state.user.email); 
+    await Navigator.pushNamed(state.context, FriendSearchScreen.routeName, arguments: {
+      Constant.ARG_USER: state.user, Constant.ARG_ONE_PROFILE: state.profile, Constant.ARG_FOLLOWING: publicProfiles,
+    });
+    // Navigator.pop(state.context);
   }
 }

@@ -21,7 +21,9 @@ class _AddPhotoMemoState extends State<AddPhotoMemoScreen> {
   _Controller con;
   GlobalKey<FormState> formKey = GlobalKey<FormState>();
   File photo;
+  Privacy privacy; 
   User user;
+
   MLAlgorithm labeler; 
   List<PhotoMemo> photoMemoList;
   String progressMessage;
@@ -63,7 +65,7 @@ class _AddPhotoMemoState extends State<AddPhotoMemoScreen> {
                               )
                             : Image.file(
                                 photo,
-                                fit: BoxFit.fill,
+                                fit: BoxFit.scaleDown,
                               ),
                       ),
                       Positioned(
@@ -127,16 +129,32 @@ class _AddPhotoMemoState extends State<AddPhotoMemoScreen> {
                 validator: PhotoMemo.validateMemo,
                 onSaved: con.saveMemo,
               ),
-              TextFormField(
-                decoration: InputDecoration(
-                  hintText: 'SharedWith (comma separated email list)',
+              RadioListTile(
+                  title: Text("Public"),
+                  dense: true,
+                  value: Privacy.Public,
+                  groupValue: privacy,
+                  onChanged: (value) {render(() => privacy = value);} 
                 ),
-                autocorrect: false, // set to false because it is email
-                keyboardType: TextInputType.emailAddress,
-                maxLines: 2,
-                validator: PhotoMemo.validateSharedWith,
-                onSaved: con.saveSharedWith,
-              ),
+              RadioListTile(
+                  title: Text("Private"),
+                  dense: true,
+                  value: Privacy.Private,
+                  groupValue: privacy,
+                  onChanged: (value) {render(() => privacy = value);} 
+                ),
+              privacy == Privacy.Private 
+              ? TextFormField(
+                  decoration: InputDecoration(
+                    hintText: 'SharedWith (comma separated email list)',
+                  ),
+                  autocorrect: false, // set to false because it is email
+                  keyboardType: TextInputType.emailAddress,
+                  maxLines: 2,
+                  validator: PhotoMemo.validateSharedWith,
+                  onSaved: con.saveSharedWith,
+                )
+              : SizedBox(height: 1.0,),
               Column(children: [
                 RadioListTile(
                   title: Text(MLAlgorithm.MLLabels.toString().split('.')[1]),
@@ -152,16 +170,6 @@ class _AddPhotoMemoState extends State<AddPhotoMemoScreen> {
                   groupValue: labeler,
                   onChanged: (value) {render(() => labeler = value);} //con.setLabeler(value),
                 ),
-              // Column(
-              //   children: con.getRadioTiles(labeler),
-            //       RadioListTile(
-            //   title: Text("ML Labeler"),
-            //   dense: true,
-            //   value: MLAlgorithm,
-            //   groupValue: labeler,
-            //   onChanged: (MLAlgorithm MLAlgorithm.MLLabels) { state.render(() labeler = MLAlgorithm.MLLabels );},
-            //   // onChanged: editMode ? (value) {} : null,
-            // ),
                 ],
               ),
             ],
@@ -214,13 +222,16 @@ class _Controller {
       }
       state.render(() => state.progressMessage = null);
 
+      if(state.privacy == Privacy.Public) 
+        tempMemo.public = true; 
+      else
+        tempMemo.public = false;
       tempMemo.photoFilename = photoInfo[Constant.ARG_FILENAME];
       tempMemo.photoURL = photoInfo[Constant.ARG_DOWNLOADURL];
       tempMemo.timestamp = DateTime.now();
       tempMemo.labeler = state.labeler.toString(); 
       tempMemo.createdBy = state.user.email;
       tempMemo.imageLabels = imageLabels;
-      tempMemo.numOfComments = 0;
       tempMemo.likes = 0;
       String docId = await FirebaseController.addPhotoMemo(tempMemo);
       tempMemo.docID = docId;
@@ -273,8 +284,10 @@ class _Controller {
   }
 
   void saveSharedWith(String value) {
-    if (value.trim().length != 0) {
-      tempMemo.sharedWith = value.split(RegExp('(,| )+')).map((e) => e.trim()).toList();
+    if(state.privacy == Privacy.Private) {
+      if (value.trim().length != 0) {
+        tempMemo.sharedWith = value.split(RegExp('(,| )+')).map((e) => e.trim()).toList();
+      }
     }
   }
 }
