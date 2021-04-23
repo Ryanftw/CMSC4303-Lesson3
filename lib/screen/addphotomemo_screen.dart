@@ -21,7 +21,7 @@ class _AddPhotoMemoState extends State<AddPhotoMemoScreen> {
   _Controller con;
   GlobalKey<FormState> formKey = GlobalKey<FormState>();
   File photo;
-  Privacy privacy; 
+  bool public; 
   User user;
 
   MLAlgorithm labeler; 
@@ -132,18 +132,18 @@ class _AddPhotoMemoState extends State<AddPhotoMemoScreen> {
               RadioListTile(
                   title: Text("Public"),
                   dense: true,
-                  value: Privacy.Public,
-                  groupValue: privacy,
-                  onChanged: (value) {render(() => privacy = value);} 
+                  value: true,
+                  groupValue: public,
+                  onChanged: (value) {render(() => public = value);} 
                 ),
               RadioListTile(
                   title: Text("Private"),
                   dense: true,
-                  value: Privacy.Private,
-                  groupValue: privacy,
-                  onChanged: (value) {render(() => privacy = value);} 
+                  value: false,
+                  groupValue: public,
+                  onChanged: (value) {render(() => public = value);} 
                 ),
-              privacy == Privacy.Private 
+              public == false 
               ? TextFormField(
                   decoration: InputDecoration(
                     hintText: 'SharedWith (comma separated email list)',
@@ -161,14 +161,14 @@ class _AddPhotoMemoState extends State<AddPhotoMemoScreen> {
                   dense: true,
                   value: MLAlgorithm.MLLabels,
                   groupValue: labeler,
-                  onChanged: (value) {render(() => labeler = value);} //con.setLabeler(value),
+                  onChanged: (value) {render(() => labeler = value);} 
                 ),
                 RadioListTile(
                   title: Text(MLAlgorithm.MLText.toString().split('.')[1]),
                   dense: true,
                   value: MLAlgorithm.MLText,
                   groupValue: labeler,
-                  onChanged: (value) {render(() => labeler = value);} //con.setLabeler(value),
+                  onChanged: (value) {render(() => labeler = value);} 
                 ),
                 ],
               ),
@@ -222,7 +222,7 @@ class _Controller {
       }
       state.render(() => state.progressMessage = null);
 
-      if(state.privacy == Privacy.Public) 
+      if(state.public == true) 
         tempMemo.public = true; 
       else
         tempMemo.public = false;
@@ -269,12 +269,6 @@ class _Controller {
     }
   }
 
-  // List<Widget> getRadioTiles(MLAlgorithm nonce) {
-  //   return MLAlgorithm.values.map((ml) => RadioListTile(title: Text(ml.toString().split('.')[1]), dense: true, value: ml, groupValue: state.labeler, onChanged: (MLAlgorithm value) {
-  //     state.render(() => state.labeler = value);
-  //   } )).toList();
-  // }
-
   void saveTitle(String value) {
     tempMemo.title = value;
   }
@@ -284,7 +278,7 @@ class _Controller {
   }
 
   void saveSharedWith(String value) {
-    if(state.privacy == Privacy.Private) {
+    if(state.public == false) {
       if (value.trim().length != 0) {
         tempMemo.sharedWith = value.split(RegExp('(,| )+')).map((e) => e.trim()).toList();
       }

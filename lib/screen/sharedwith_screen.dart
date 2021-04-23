@@ -68,7 +68,7 @@ class _SharedWithState extends State<SharedWithScreen> {
                                 context: context,
                               ),
                             ),
-                            onTap: () => con.thumbsUp(index),
+                            onDoubleTap: () => con.thumbsUp(index),
                           ),
                         ),
                         Row(

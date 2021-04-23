@@ -168,15 +168,17 @@ class _UserHomeState extends State<UserHomeScreen> {
                       Expanded(
                         flex: 3,
                          child: Center(
-                          child: profile.url != null ?
+                          child: profile.url != "" ?
                           Container(
                             height: MediaQuery.of(context).size.height * 0.5,
                             width: MediaQuery.of(context).size.width * 0.5,
                             decoration: BoxDecoration(shape: BoxShape.circle, image: DecorationImage(fit:BoxFit.scaleDown, image: NetworkImage(profile.url))),
-                          ) : Container(
-                            height: MediaQuery.of(context).size.height * 0.5,
-                            width: MediaQuery.of(context).size.width * 0.5,
-                            child: Icon(Icons.person, size: 150,),
+                          ) : Positioned(
+                            // height: MediaQuery.of(context).size.height * 0.5,
+                            // width: MediaQuery.of(context).size.width * 0.5,
+                            top: 120.0,
+                            right: 120.0,
+                            child: Icon(Icons.person, size: 250,),
                           ),//Icon(Icons.person, size: 300,),
                         ),
                     ),
@@ -285,14 +287,6 @@ class _UserHomeState extends State<UserHomeScreen> {
                     ),
                   ),
                 )
-                // : SizedBox(height: 25.0,),
-                // Expanded(
-                //   flex: 4,
-                //   child: Text(
-                //     "No Photomemos Found!", 
-                //     style: Theme.of(context).textTheme.headline5,
-                //   ),
-                // ),
                 ],),
                           ],),
                           
@@ -383,6 +377,7 @@ class _Controller {
     await Navigator.pushNamed(state.context, ProfileSettingsScreen.routeName, arguments: {
       Constant.ARG_USER: state.user,
       Constant.ARG_ONE_PROFILE: state.profile,
+      Constant.ARG_PHOTOMEMOLIST: state.photoMemoList,
     });
     Navigator.pop(state.context);
     state.render(() {});
@@ -446,6 +441,7 @@ class _Controller {
     await Navigator.pushNamed(state.context, FriendSearchScreen.routeName, arguments: {
       Constant.ARG_USER: state.user, Constant.ARG_ONE_PROFILE: state.profile, Constant.ARG_FOLLOWING: publicProfiles,
     });
+    state.render(() {});
     // Navigator.pop(state.context);
   }
 }

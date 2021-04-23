@@ -73,12 +73,12 @@ class _FriendSearchState extends State<FriendSearchScreen> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Center(
-                          child: profileList[index].url != null ? Container(
+                          child: profileList[index].url != "" ? Container(
                             height: MediaQuery.of(context).size.height * 0.3,
                             width: MediaQuery.of(context).size.width * 0.6,
                             decoration: BoxDecoration(shape: BoxShape.circle,),
                             child: MyImage.network(url: profileList[index].url, context: context))// image: DecorationImage(fit:BoxFit.scaleDown, image: NetworkImage(publicProfileList[index].url))))
-                            : Icon(Icons.person, size: 90.0,),
+                            : Positioned(top: 90.0, right: 90, child: Icon(Icons.person, size: 90.0,),),
                           ),
                         Text("Name ${profileList[index].name}"),
                         Text("Age ${profileList[index].age}"),
@@ -88,8 +88,8 @@ class _FriendSearchState extends State<FriendSearchScreen> {
                     ),
                   ),
                 profile.following.contains(profileList[index].email) ?
-                Positioned(top: 300.0, right: 160.0, child: IconButton(icon: Icon(Icons.check_box, color: Colors.blue[300],), onPressed: con.unFollow,),)
-                : Positioned(top: 300.0, right: 160.0, child: IconButton(icon: Icon(Icons.check_box_outline_blank), onPressed: con.follow,),),
+                Positioned(top: 300.0, right: 160.0, child: IconButton(icon: Icon(Icons.check_box, color: Colors.blue[300],), onPressed: () => con.unFollow(index),),)
+                : Positioned(top: 300.0, right: 160.0, child: IconButton(icon: Icon(Icons.check_box_outline_blank), onPressed: () => con.follow(index),),),
                 profile.following.contains(profileList[index].email) ?
                 Positioned(top: 300.0, right: 5.0, child: Text("Following!\nUncheck to unfollow.", style: TextStyle(color: Colors.blue[300]),),)
                 : Positioned(top: 315.0, right: 5.0, child: Text("Check the box to follow!", style: TextStyle(color: Colors.blue[300]),),),
@@ -105,16 +105,13 @@ class _FriendSearchState extends State<FriendSearchScreen> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Center(
-                          child: publicProfileList[index].url != null ? Container(
+                          child: publicProfileList[index].url != "" ? Container(
                             height: MediaQuery.of(context).size.height * 0.3,
                             width: MediaQuery.of(context).size.width * 0.6,
                             // decoration: BoxDecoration(shape: BoxShape.circle,),
                             child: MyImage.network(url: publicProfileList[index].url, context: context))// image: DecorationImage(fit:BoxFit.scaleDown, image: NetworkImage(publicProfileList[index].url))))
-                            : Container(
-                            height: MediaQuery.of(context).size.height * 0.5,
-                            width: MediaQuery.of(context).size.width * 0.5,
-                            child: Icon(Icons.person, size: 150,),
-                          ),//Icon(Icons.person, size: 90.0,),
+                            : Positioned(top: 90.0, right: 90, child: Icon(Icons.person, size: 260.0,),),
+                            //Icon(Icons.person, size: 90.0,),
                           ),
                         Text("Name ${publicProfileList[index].name}"),
                         Text("Age ${publicProfileList[index].age}"),
@@ -124,8 +121,8 @@ class _FriendSearchState extends State<FriendSearchScreen> {
                     ),
                   ),
                 profile.following.contains(publicProfileList[index].email) ?
-                Positioned(top: 300.0, right: 160.0, child: IconButton(icon: Icon(Icons.check_box, color: Colors.blue[300],), onPressed: con.unFollow,),)
-                : Positioned(top: 300.0, right: 160.0, child: IconButton(icon: Icon(Icons.check_box_outline_blank), onPressed: con.follow,),),
+                Positioned(top: 300.0, right: 160.0, child: IconButton(icon: Icon(Icons.check_box, color: Colors.blue[300],), onPressed: () => con.unFollow(index),),)
+                : Positioned(top: 300.0, right: 160.0, child: IconButton(icon: Icon(Icons.check_box_outline_blank), onPressed: () => con.follow(index),),),
                 profile.following.contains(publicProfileList[index].email) ?
                 Positioned(top: 300.0, right: 5.0, child: Text("Following!\nUncheck to unfollow.", style: TextStyle(color: Colors.blue[300]),),)
                 : Positioned(top: 315.0, right: 5.0, child: Text("Check the box to follow!", style: TextStyle(color: Colors.blue[300]),),),
@@ -142,10 +139,12 @@ class _Controller {
   _Controller(this.state); 
   String keyString; 
 
-  void follow() async {
+  void follow(int index) async {
     try {
       Map<String, dynamic> updateFollowing = {}; 
-      state.profile.following.add(state.profileList.elementAt(0).email);
+      state.profileList != null && state.profileList.length > 0 
+      ? state.profile.following.add(state.profileList.elementAt(index).email)
+      : state.profile.following.add(state.publicProfileList.elementAt(index).email);
       updateFollowing[Profile.FOLLOWING] = state.profile.following;  
       await FirebaseController.updateFollowing(state.profile.docId, updateFollowing); 
       state.render(() {});
@@ -154,10 +153,12 @@ class _Controller {
     }
   }
 
-  void unFollow() async {
+  void unFollow(int index) async {
     try {
       Map<String, dynamic> updateFollowing = {}; 
-      state.profile.following.removeWhere((element) => element == state.profileList.elementAt(0).email);
+      state.profileList != null && state.profileList.length > 0
+      ? state.profile.following.removeWhere((element) => element == state.profileList.elementAt(index).email)
+      : state.profile.following.removeWhere((element) => element == state.publicProfileList.elementAt(index).email);
       updateFollowing[Profile.FOLLOWING] = state.profile.following; 
       await FirebaseController.updateFollowing(state.profile.docId, updateFollowing); 
       state.render(() {});
@@ -182,8 +183,6 @@ class _Controller {
           temp.add(element);
         }
       });
-      // print("here"); 
-      // temp.forEach((element) {print("${element.displayName}");});
       state.profileList.clear(); 
       List<Profile> tempProfile = [];
       if(temp.isEmpty) {
@@ -193,17 +192,7 @@ class _Controller {
       }
       if(tempProfile.isNotEmpty)
       state.profileList.addAll(tempProfile);
-
-      // state.profileList.forEach((element) {print("${element.displayName}");});
       state.render(() {});
-      // try {
-      //   List<Profile> results;
-      //   results = await FirebaseController.searchProfile(
-      //     keyString);
-      //   state.render(() => state.publicProfileList.addAll(results));// = results);
-      // } catch (e) {
-      //   MyDialog.info(context: state.context, title: "Search error", content: "$e");
-      // }
     }
 
     void saveSearchKeyString(String value) {

@@ -101,21 +101,6 @@ class _ViewCommentsState extends State<ViewCommentsScreen> {
                                 commentList[index].commentBy == user.email || commentList[index].commentOn == user.email ? 
                                 RaisedButton(onPressed: () => con.deleteComment(index), child: Text("Delete"),)
                                 : SizedBox(height: 1.0),
-                                // SizedBox(
-                                //   height: 40,
-                                //   width: 15.0,
-                                // ),
-                                // commentList[index].userProfilePic == null
-                                //     ? SizedBox(height: 1.0)
-                                //     : Container(
-                                //         height: 40,
-                                //         width: 40,
-                                //         child: MyImage.network(
-                                //             url: commentList[index].userProfilePic,
-                                //             context: context),
-                                //       ),
-                                //   ],
-                                // ),
                               ],
                             ),
                           ),

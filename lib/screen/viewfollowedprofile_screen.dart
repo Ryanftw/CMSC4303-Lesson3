@@ -50,26 +50,6 @@ class _ViewFollowedProfileState extends State<ViewFollowedProfileScreen> {
       ),
       body: Stack(
                 children: [
-                  // Positioned(
-                  //   top: 20.0,
-                  //   right: 325.0,
-                  //   child: IconButton(icon: Icon(Icons.person_search, size: 30.0,), onPressed: con.searchFriends,),
-                  // ),
-                  // Positioned(
-                  //   top: 65.0,
-                  //   right: 305.0,
-                  //   child: Text("Search for\nfriends!"),
-                  // ),
-                  // Positioned(
-                  //   top: 215.0,
-                  //   right: 315.0,
-                  //   child: IconButton(icon: Icon(Icons.people, size: 40.0, color: Colors.blue[300],), onPressed: con.followingPage,),
-                  // ),
-                  // Positioned(
-                  //   top: 265.0,
-                  //   right: 305.0,
-                  //   child: Text("Following"),
-                  // ),
                   Positioned(
                     top: 210.0,
                     right: 178.0,
@@ -90,12 +70,12 @@ class _ViewFollowedProfileState extends State<ViewFollowedProfileScreen> {
                       Expanded(
                         flex: 2,
                          child: Center(
-                          child: profile.url != null ?
+                          child: profile.url != "" ?
                           Container(
                             height: MediaQuery.of(context).size.height * 0.4,
                             width: MediaQuery.of(context).size.width * 0.4,
                             decoration: BoxDecoration(shape: BoxShape.circle, image: DecorationImage(fit:BoxFit.scaleDown, image: NetworkImage(profile.url))),
-                          ) : Icon(Icons.person, size: 300,),
+                          ) : Icon(Icons.person, size: 200,),
                         ),
                       ),
                     Divider(height: 1.0, color: Colors.blue[300], indent: 40.0, endIndent: 40.0, thickness: 0.3,),
@@ -200,86 +180,6 @@ class _ViewFollowedProfileState extends State<ViewFollowedProfileScreen> {
                     ),
         ],),
                 ]),);
-      // body: followingList.isNotEmpty ? GridView.builder(
-      //   gridDelegate: SliverGridDelegateWithMaxCrossAxisExtent(
-      //     maxCrossAxisExtent: 200,
-      //     childAspectRatio: 3 / 2,
-      //     crossAxisSpacing: 20,
-      //     mainAxisSpacing: 20
-      //   ),
-      //   itemCount: followingList.length,
-      //   itemBuilder: (context, index) => Stack(
-      //           children: [
-      //             Card(
-      //               elevation: 7.0,
-      //               child: Column(
-      //                 crossAxisAlignment: CrossAxisAlignment.start,
-      //                 children: [
-      //                   Center(
-      //                     child: followingList[index] != null ? GestureDetector(
-      //                       child: Container(
-      //                         height: MediaQuery.of(context).size.height * 0.3,
-      //                         width: MediaQuery.of(context).size.width * 0.6,
-      //                         decoration: BoxDecoration(shape: BoxShape.circle, image: DecorationImage(fit:BoxFit.scaleDown, image: NetworkImage(followingList.elementAt(index).url),)),
-      //                       ),
-      //                       onTap: null,//() => con.followingSharedWith(index),
-      //                     )
-      //                       : Icon(Icons.person, size: 90.0,),
-      //                     ),
-      //                   Text("Name ${followingList[index].name}"),
-      //                   Text("Age ${followingList[index].age}"),
-      //                   Text("DisplayName ${followingList[index].displayName}"),
-      //                   Text("Email ${followingList[index].email}"),
-      //                 ],
-      //               ),
-      //             ),
-      //           profile.following.contains(followingList[index].email) ?
-      //           Positioned(top: 300.0, right: 160.0, child: IconButton(icon: Icon(Icons.check_box, color: Colors.blue[300],), onPressed: null,))// con.unFollow,),)
-      //           : Positioned(top: 300.0, right: 160.0, child: IconButton(icon: Icon(Icons.check_box_outline_blank), onPressed: null),),// con.follow,),),
-      //           profile.following.contains(followingList[index].email) ?
-      //           Positioned(top: 300.0, right: 5.0, child: Text("Following!\nUncheck to unfollow.", style: TextStyle(color: Colors.blue[300]),),)
-      //           : Positioned(top: 315.0, right: 5.0, child: Text("Check the box to follow!", style: TextStyle(color: Colors.blue[300]),),),
-      //           ],
-      //         ),
-      
-      
-    //   body: followingList.isNotEmpty ? ListView.builder(
-    //           itemCount: followingList.length,
-    //           itemBuilder: (context, index) => Stack(
-    //             children: [
-    //               Card(
-    //                 elevation: 7.0,
-    //                 child: Column(
-    //                   crossAxisAlignment: CrossAxisAlignment.start,
-    //                   children: [
-    //                     Center(
-    //                       child: followingList[index] != null ? GestureDetector(
-    //                         child: Container(
-    //                           height: MediaQuery.of(context).size.height * 0.3,
-    //                           width: MediaQuery.of(context).size.width * 0.6,
-    //                           decoration: BoxDecoration(shape: BoxShape.circle, image: DecorationImage(fit:BoxFit.scaleDown, image: NetworkImage(followingList.elementAt(index).url),)),
-    //                         ),
-    //                         onTap: null,//() => con.followingSharedWith(index),
-    //                       )
-    //                         : Icon(Icons.person, size: 90.0,),
-    //                       ),
-    //                     Text("Name ${followingList[index].name}"),
-    //                     Text("Age ${followingList[index].age}"),
-    //                     Text("DisplayName ${followingList[index].displayName}"),
-    //                     Text("Email ${followingList[index].email}"),
-    //                   ],
-    //                 ),
-    //               ),
-    //             profile.following.contains(followingList[index].email) ?
-    //             Positioned(top: 300.0, right: 160.0, child: IconButton(icon: Icon(Icons.check_box, color: Colors.blue[300],), onPressed: null,))// con.unFollow,),)
-    //             : Positioned(top: 300.0, right: 160.0, child: IconButton(icon: Icon(Icons.check_box_outline_blank), onPressed: null),),// con.follow,),),
-    //             profile.following.contains(followingList[index].email) ?
-    //             Positioned(top: 300.0, right: 5.0, child: Text("Following!\nUncheck to unfollow.", style: TextStyle(color: Colors.blue[300]),),)
-    //             : Positioned(top: 315.0, right: 5.0, child: Text("Check the box to follow!", style: TextStyle(color: Colors.blue[300]),),),
-    //             ],
-    //           ),
-    //     ) : Text("Not Following Anyone!!!"),
-    // );
   }
 }
 

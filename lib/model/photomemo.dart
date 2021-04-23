@@ -3,11 +3,6 @@ enum MLAlgorithm {
   MLText,
 }
 
-enum Privacy {
-  Public, 
-  Private,
-}
-
 class PhotoMemo {  
   String docID; //Firestore auto generated id
   String createdBy;

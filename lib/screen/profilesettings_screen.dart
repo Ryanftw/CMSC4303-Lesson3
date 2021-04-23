@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:Assignment3/controller/firebasecontroller.dart';
 import 'package:Assignment3/model/constant.dart';
+import 'package:Assignment3/model/photomemo.dart';
 import 'package:Assignment3/model/profile.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
@@ -21,10 +22,10 @@ class ProfileSettingsScreen extends StatefulWidget {
 class _ProfileSettingsState extends State<ProfileSettingsScreen> {
   _Controller con;
   User user;
-  bool public = false; 
+  bool public;// = false; 
   Profile profile;
   Profile tempProfile;
-  // String photourl;
+  List<PhotoMemo> photoMemoList; 
 
   bool editMode = false;
   GlobalKey<FormState> formKey = GlobalKey<FormState>();
@@ -43,6 +44,7 @@ class _ProfileSettingsState extends State<ProfileSettingsScreen> {
     Map args = ModalRoute.of(context).settings.arguments;
     user ??= args[Constant.ARG_USER];
     profile ??= args[Constant.ARG_ONE_PROFILE];
+    photoMemoList ??= args[Constant.ARG_PHOTOMEMOLIST];
     // profile == null ? tempProfile = new Profile() : tempProfile = Profile.clone(profile);
     tempProfile ??= Profile.clone(profile);
     return Scaffold(
@@ -262,12 +264,23 @@ class _Controller {
         state.tempProfile.profilePublic = state.public; 
         updateInfo[Profile.PROFILE_PUBLIC] = state.public; 
         if(!state.public) {
-          Map<String, dynamic> updatePrivacy = {}; 
-          updatePrivacy[Profile.PROFILE_PUBLIC] = state.public; 
-          await FirebaseController.setPhotosPrivate(state.user.email, updatePrivacy); 
+          Map<String, dynamic> updatePublic = {}; 
+          updatePublic[Profile.PROFILE_PUBLIC] = state.public; 
+          await FirebaseController.setPhotosPrivate(state.user.email, updatePublic); 
         }
         if(!state.public) {
           await FirebaseController.deleteUserLikes(state.user.email); 
+          state.photoMemoList.forEach((element) async {
+            element.likedBy.clear(); 
+            element.likes = 0; 
+            element.notification = false; 
+            Map<String, dynamic> updateInfo = {}; 
+            updateInfo[PhotoMemo.LIKED_BY] = element.likedBy; 
+            updateInfo[PhotoMemo.LIKES] = element.likes; 
+            updateInfo[PhotoMemo.NOTIFICATION] = element.notification; 
+            await FirebaseController.updatePhotoMemo(element.docID, updateInfo);
+          });
+
         }
         state.tempProfile.profileFilename = photoInfo[Constant.ARG_FILENAME];
         updateInfo[Profile.PROFILE_FILENAME] = photoInfo[Constant.ARG_FILENAME];
@@ -298,12 +311,22 @@ class _Controller {
         state.tempProfile.profilePublic = state.public; 
         updateInfo[Profile.PROFILE_PUBLIC] = state.public; 
         if(!state.public) {
-          Map<String, dynamic> updatePrivacy = {}; 
-          updatePrivacy[Profile.PROFILE_PUBLIC] = state.public; 
-          await FirebaseController.setPhotosPrivate(state.user.email, updatePrivacy); 
+          Map<String, dynamic> updatePublic = {}; 
+          updatePublic[Profile.PROFILE_PUBLIC] = state.public; 
+          await FirebaseController.setPhotosPrivate(state.user.email, updatePublic); 
         }
         if(!state.public) {
           await FirebaseController.deleteUserLikes(state.user.email); 
+          state.photoMemoList.forEach((element) async {
+            element.likedBy.clear(); 
+            element.likes = 0; 
+            element.notification = false; 
+            Map<String, dynamic> updateInfo = {}; 
+            updateInfo[PhotoMemo.LIKED_BY] = element.likedBy; 
+            updateInfo[PhotoMemo.LIKES] = element.likes; 
+            updateInfo[PhotoMemo.NOTIFICATION] = element.notification; 
+            await FirebaseController.updatePhotoMemo(element.docID, updateInfo);
+          });
         }
         state.user.updateProfile(
             displayName: state.tempProfile.displayName, photoURL: state.tempProfile.url);

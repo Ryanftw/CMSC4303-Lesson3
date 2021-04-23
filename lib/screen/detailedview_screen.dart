@@ -27,9 +27,9 @@ class DetailedViewScreen extends StatefulWidget {
 class _DetailedViewState extends State<DetailedViewScreen> {
   _Controller con;
   User user;
-  Privacy privacy; 
   PhotoMemo onePhotoMemoOriginal;
   MLAlgorithm onePhotoMemoTempLabeler; 
+  bool public; 
   PhotoMemo onePhotoMemoTemp;
   List<Comment> commentList;
   bool editMode = false;
@@ -52,6 +52,7 @@ class _DetailedViewState extends State<DetailedViewScreen> {
     // userLikes ??= args[Constant.ARG_LIKES];
     onePhotoMemoOriginal ??= args[Constant.ARG_ONE_PHOTOMEMO];
     onePhotoMemoTemp ??= PhotoMemo.clone(onePhotoMemoOriginal);
+    public ??= onePhotoMemoTemp.public;
     return Scaffold(
       appBar: AppBar(
         title: Text("Detailed View"),
@@ -170,21 +171,21 @@ class _DetailedViewState extends State<DetailedViewScreen> {
               ? RadioListTile(
                     title: Text("Public"),
                     dense: true,
-                    value: Privacy.Public,
-                    groupValue: privacy,
-                    onChanged: (value) {render(() => privacy = value);} 
+                    value: true,
+                    groupValue: public,
+                    onChanged: (value) {render(() => public = value);} 
                   )
               : SizedBox(height: 1.0,),
               editMode ?
                 RadioListTile(
                     title: Text("Private"),
                     dense: true,
-                    value: Privacy.Private,
-                    groupValue: privacy,
-                    onChanged: (value) {render(() => privacy = value);} 
+                    value: false,
+                    groupValue: public,
+                    onChanged: (value) {render(() => public = value);} 
                   )
                 : SizedBox(height: 9.0,),
-              onePhotoMemoTemp.public == false || privacy == Privacy.Private
+              onePhotoMemoTemp.public == false || public == false
                 ? TextFormField(
                   enabled: editMode,
                   style: Theme.of(context).textTheme.headline6,
@@ -336,7 +337,7 @@ class _Controller {
         updateInfo[PhotoMemo.TITLE] = state.onePhotoMemoTemp.title;
       if (state.onePhotoMemoOriginal.memo != state.onePhotoMemoTemp.memo)
         updateInfo[PhotoMemo.MEMO] = state.onePhotoMemoTemp.memo;
-      if(state.privacy == Privacy.Private) {
+      if(state.public == false) {
         state.onePhotoMemoTemp.public = false; 
         updateInfo[PhotoMemo.PUBLIC] = state.onePhotoMemoTemp.public; 
         if (!listEquals(state.onePhotoMemoOriginal.sharedWith, state.onePhotoMemoTemp.sharedWith)) {
@@ -350,24 +351,13 @@ class _Controller {
             }
           }
         }
-      } else { // (state.privacy == Privacy.Public)
+      } else { 
         state.onePhotoMemoTemp.sharedWith.clear();
         state.onePhotoMemoTemp.public = true; 
         updateInfo[PhotoMemo.PUBLIC] = state.onePhotoMemoTemp.public; 
         updateInfo[PhotoMemo.SHARED_WITH] = state.onePhotoMemoTemp.sharedWith; 
       }
-      // if (!listEquals(
-      //     state.onePhotoMemoOriginal.sharedWith, state.onePhotoMemoTemp.sharedWith))
-      //   updateInfo[PhotoMemo.SHARED_WITH] = state.onePhotoMemoTemp.sharedWith;
-      // if (!commentsDeleted) {
-      //   for (var c in tempCommentsList) {
-      //     if (state.onePhotoMemoTemp.sharedWith.isEmpty ||
-      //         !state.onePhotoMemoTemp.sharedWith.contains(c.commentBy)) {
-      //       await FirebaseController.deletePhotoComment(docId: c.docId);
-      //       removeCommentsList.add(c);
-      //     }
-      //   }
-      // }
+    
       if (!commentsDeleted) {
         for (var c in removeCommentsList) {
           tempCommentsList.remove(c);
@@ -381,7 +371,7 @@ class _Controller {
           }
         }
       }
-      if(state.privacy == Privacy.Private) {
+      if(state.public == false) {
         if (!likesDeleted) {
           for (var l in tempLikesList) {
             if (!state.onePhotoMemoTemp.sharedWith.contains(l.likedBy)) {
@@ -504,7 +494,7 @@ class _Controller {
   }
 
   void saveSharedWith(String value) {
-    if(state.privacy == Privacy.Private) {
+    if(state.public == false) {
       if (value.trim().length != 0) {
         state.onePhotoMemoTemp.sharedWith =
             value.split(RegExp('(,| )+')).map((e) => e.trim()).toList();
@@ -515,11 +505,5 @@ class _Controller {
       state.onePhotoMemoTemp.sharedWith.clear(); 
     }
   }
-
-  // List<Widget> getRadioTiles(String algValue) {
-  //   return MLAlgorithm.values.map((ml) => RadioListTile(selected: state.onePhotoMemoTemp.labeler == ml.toString() ? true : false, title: Text(ml.toString().split('.')[1]), dense: true, value: ml, groupValue: state.onePhotoMemoTempLabeler, onChanged: (MLAlgorithm value) {
-  //     state.render(() => state.onePhotoMemoTempLabeler = value);
-  //       } )).toList();
-  // }
 }
 

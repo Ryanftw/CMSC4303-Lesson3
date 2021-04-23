@@ -44,9 +44,9 @@ class _ViewFollowingState extends State<ViewFollowingScreen> {
       body: followingList.isNotEmpty ? GridView.builder(
         gridDelegate: SliverGridDelegateWithMaxCrossAxisExtent(
           maxCrossAxisExtent: 200,
-          childAspectRatio: 2 / 3,
-          crossAxisSpacing: 20,
-          mainAxisSpacing: 20
+          childAspectRatio: 4 / 5,
+          crossAxisSpacing: 10,
+          mainAxisSpacing: 10
         ),
         itemCount: followingList.length,
         itemBuilder: (context, index) => Stack(
@@ -58,11 +58,15 @@ class _ViewFollowingState extends State<ViewFollowingScreen> {
                       children: [
                         Center(
                           child: followingList[index] != null ? GestureDetector(
-                            child: Container(
+                            child: followingList[index].url != "" ? Container(
                               height: 150.0,// MediaQuery.of(context).size.height * 0.3,
                               width: MediaQuery.of(context).size.width * 0.6,
                               // decoration: BoxDecoration(shape: BoxShape.circle, image: DecorationImage(fit:BoxFit.scaleDown, image: NetworkImage(followingList.elementAt(index).url),)),
                               child: MyImage.network(url: followingList[index].url, context: context),
+                            ) : Container(
+                              height: 150.0,
+                              width: MediaQuery.of(context).size.width * 0.6,
+                              child: Icon(Icons.person, size: 150,),
                             ),
                             onTap: () => con.followingSharedWith(index),
                           )
@@ -75,12 +79,12 @@ class _ViewFollowingState extends State<ViewFollowingScreen> {
                       ],
                     ),
                   ),
-                profile.following.contains(followingList[index].email) ?
-                Positioned(top: 255.0, right: 157.0, child: IconButton(icon: Icon(Icons.check_box, color: Colors.blue[300],), onPressed: null,))// con.unFollow,),)
-                : Positioned(top: 255.0, right: 157.0, child: IconButton(icon: Icon(Icons.check_box_outline_blank), onPressed: null),),// con.follow,),),
-                profile.following.contains(followingList[index].email) ?
-                Positioned(top: 255.0, right: 2.0, child: Text("Following!\nUncheck to unfollow.", style: TextStyle(color: Colors.blue[300]),),)
-                : Positioned(top: 260.0, right: 2.0, child: Text("Check the box\nto follow!", style: TextStyle(color: Colors.blue[300]),),),
+                // profile.following.contains(followingList[index].email) ?
+                // Positioned(top: 255.0, right: 157.0, child: IconButton(icon: Icon(Icons.check_box, color: Colors.blue[300],), onPressed: null,))// con.unFollow,),)
+                // : Positioned(top: 255.0, right: 157.0, child: IconButton(icon: Icon(Icons.check_box_outline_blank), onPressed: null),),// con.follow,),),
+                // profile.following.contains(followingList[index].email) ?
+                // Positioned(top: 255.0, right: 2.0, child: Text("Following!\nUncheck to unfollow.", style: TextStyle(color: Colors.blue[300]),),)
+                // : Positioned(top: 260.0, right: 2.0, child: Text("Check the box\nto follow!", style: TextStyle(color: Colors.blue[300]),),),
                 ],
               ),
         ) : Text("Not Following Anyone!!!"),
